@@ -1,0 +1,36 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #000;
+    font-family: Arial, sans-serif;
+}
+canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+}
+#refreshButton {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 15px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border: 1px solid black;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+#refreshButton:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+#textOverlay {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    pointer-events: none;
+}
