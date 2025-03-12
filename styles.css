@@ -6,8 +6,11 @@ body {
 }
 canvas {
     display: block;
-    width: 100vw;
-    height: 100vh;
+    max-width: 95vw;
+    margin: 0 auto;
+    margin-top: 2.5vh;
+    text-align: center;
+    /* height: 100vh; */
 }
 #refreshButton {
     position: fixed;

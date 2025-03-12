@@ -1,5 +1,8 @@
 // Initialize WebGL context
-const canvas = document.getElementById('komorebi');
+const canvas = document.getElementById('canvas');
+canvas.width = 1000;
+canvas.height = 1000;
+
 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 let isPlaying = false;
 
@@ -7,6 +10,7 @@ if (!gl) {
     alert('WebGL not supported');
 }
 
+/*
 // Resize canvas
 function resizeCanvas() {
     canvas.width = window.innerWidth;
@@ -16,6 +20,7 @@ function resizeCanvas() {
 
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
+*/
 
 // Compile shaders
 function compileShader(source, type) {

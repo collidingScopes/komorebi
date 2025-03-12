@@ -24,7 +24,7 @@ Presets / seed choice??
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
 </head>
 <body>
-    <canvas id="komorebi"></canvas>
+    <canvas id="canvas"></canvas>
     <button id="refreshButton">New Pattern</button>
 
     <div id="textOverlay">
@@ -79,6 +79,11 @@ Presets / seed choice??
         float rand(vec3 co) {
             return fract(sin(dot(co.xyz + vec3(seed * 0.1), vec3(12.9898, 78.233, 53.539))) * 43758.5453);
         }
+
+        // Pseudo-random function for noise generation
+        float random(vec2 st) {
+            return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+        }
         
         // Simplex noise
         float snoise(vec2 v) {
@@ -112,21 +117,56 @@ Presets / seed choice??
             return 130.0 * dot(m, g);
         }
         
-        // Create larger, more prominent color patches with seed-based randomness
         float fbm(vec2 p) {
             float sum = 0.0;
             float amp = patternAmp;
             float freq = patternFreq;
-            // Add seed-based offset for variation between refreshes
-            vec2 seedOffset = vec2(sin(seed), cos(seed * 1.5)) * 3.0;
             
-            for(int i = 0; i < 3; i++) {
-                // Add unique seed-influenced offset for each octave
-                vec2 octaveOffset = seedOffset * (0.5 + float(i) * 0.1);
-                sum += amp * snoise((p + octaveOffset) * freq);
-                amp *= 0.1;
-                freq *= 0.1;
+            // Create more varied seed-based offsets using prime multipliers
+            vec2 seedOffset = vec2(
+                sin(seed * 0.731) * cos(seed * 0.293) * 2.0,
+                cos(seed * 0.897) * sin(seed * 0.413) * 2.0
+            );
+            
+            // Use more octaves with better frequency scaling
+            for(int i = 0; i < 2; i++) {
+                // Create unique rotation for each octave to break grid patterns
+                float angle = seed * 0.1 + float(i) * 0.02;
+                mat2 rotation = mat2(
+                    cos(angle), -sin(angle),
+                    sin(angle), cos(angle)
+                );
+                
+                // Rotate coordinates slightly for each octave
+                vec2 rotatedP = rotation * p;
+                
+                // Use prime-number-based offsets to avoid repeating patterns
+                vec2 octaveOffset = seedOffset + vec2(
+                    sin(float(i) * 1.731 + seed * 0.47),
+                    cos(float(i) * 1.293 + seed * 0.83)
+                );
+                
+                // Apply progressive domain warping for more organic results
+                vec2 warpedP = rotatedP + octaveOffset;
+                if (i > 0) {
+                    // Add slight domain warping based on previous octave
+                    warpedP += vec2(
+                        sin(sum * 3.14 + warpedP.y * 2.5),
+                        cos(sum * 2.71 + warpedP.x * 2.5)
+                    ) * 0.1 * float(i);
+                }
+                
+                // Add contribution from this octave
+                sum += amp * snoise(warpedP * freq);
+                
+                // Use better persistence values (slower amplitude reduction)
+                amp *= 0.9;
+                
+                // Use better lacunarity values (more moderate frequency increase)
+                freq *= 1.1;
             }
+            
+            // Normalize and add slight contrast adjustment
             return sum * 0.5 + 0.5;
         }
         
@@ -155,20 +195,20 @@ Presets / seed choice??
                 cos(slowTime * 0.18 + 1.2 + seed * 0.37) * 0.25 + cos(slowTime * 0.33 + seed * 0.27) * 0.15
             );
             
-            float noiseScale1 = 10000.0;
+            float noiseScale1 = 30000.0;
             
             // Create depth layers with seed randomization
             float depthOffset1 = sin(slowTime * 0.02 + seed * 0.5) * 6.15;
-            float depthOffset2 = sin(slowTime * 0.02 + seed * 0.7) * 12.25;
+            float depthOffset2 = sin(slowTime * 0.03 + seed * 0.7) * 12.15;
             
             // Apply depth offsets to create 3D layering effect
             vec2 depthFlow1 = flow1 + vec2(depthOffset1, depthOffset2) * 2.0;
             
             // Main light layer with enhanced 3D liquid motion
             float lightPattern = fbm(uv * noiseScale1 + depthFlow1);
-            
+
             // Adjust weights using seed for more variation
-            float combinedPattern = lightPattern * (1.0 + sin(seed) * 0.15);
+            float combinedPattern = lightPattern * (0.25 + sin(seed) * 0.0);
 
             // Start with a seed-influenced base color
             vec3 baseColor = vec3(
@@ -317,13 +357,17 @@ Presets / seed choice??
             color += bloom;
             
             // Grain with GUI-controlled grainAmount
-            float grain = rand(vec3(gl_FragCoord.xy, time + seed)) * grainAmount;
-            float grainMix = 0.2 + cos(seed * 3.3) * 0.05;
-            color = mix(color, vec3(grain), grainMix);
+            //float grain = rand(vec3(gl_FragCoord.xy, time + seed)) * grainAmount;
+            //float grainMix = 0.2 + cos(seed * 3.3) * 0.05;
+            //color = mix(color, vec3(grain), grainMix);
                         
-            // Final color adjustments with seed influence
+            //color adjustments with seed influence
             color = pow(color, vec3(1.0 + sin(seed * 4.3) * 0.1));
             color = color * (0.6 + cos(seed * 4.5) * 0.05);
+
+            vec2 noiseCoord = gl_FragCoord.xy / 1.5;
+            float noise = random(noiseCoord + time * 0.0005) * 0.12 - 0.075;        
+            color = color + vec3(noise);
 
             // Color temperature with seed influence
             float tempFactor = 1.05 + cos(seed * 4.9) * 0.02;
