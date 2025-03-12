@@ -1,17 +1,11 @@
 <!--
 To do:
-split into multiple code files
-Controls for:
-- Start/stop animation
-- Randomize inputs
-- control amp/freq of animation
-- other key controls?
-Want to be able to control scale / size / number of light blobs
-Image / video export
 Background color control?
 Text below screen (canvas should take up entire screen though)
 Ability to add this shader effect on top of an image?
 Presets / seed choice??
+Improve frame rate / script performance
+button to restart script from time=0
 -->
 
 <!DOCTYPE html>
@@ -124,14 +118,14 @@ Presets / seed choice??
             
             // Create more varied seed-based offsets using prime multipliers
             vec2 seedOffset = vec2(
-                sin(seed * 0.731) * cos(seed * 0.293) * 2.0,
-                cos(seed * 0.897) * sin(seed * 0.413) * 2.0
+                sin(seed * 0.731) * cos(seed * 0.293) * 1.0,
+                cos(seed * 0.897) * sin(seed * 0.413) * 1.0
             );
             
             // Use more octaves with better frequency scaling
             for(int i = 0; i < 2; i++) {
                 // Create unique rotation for each octave to break grid patterns
-                float angle = seed * 0.1 + float(i) * 0.02;
+                float angle = seed * 0.1 + float(i) * 0.01;
                 mat2 rotation = mat2(
                     cos(angle), -sin(angle),
                     sin(angle), cos(angle)
@@ -151,8 +145,8 @@ Presets / seed choice??
                 if (i > 0) {
                     // Add slight domain warping based on previous octave
                     warpedP += vec2(
-                        sin(sum * 3.14 + warpedP.y * 2.5),
-                        cos(sum * 2.71 + warpedP.x * 2.5)
+                        sin(sum * 2.14 + warpedP.y * 1.5),
+                        cos(sum * 1.71 + warpedP.x * 1.5)
                     ) * 0.1 * float(i);
                 }
                 
@@ -160,10 +154,10 @@ Presets / seed choice??
                 sum += amp * snoise(warpedP * freq);
                 
                 // Use better persistence values (slower amplitude reduction)
-                amp *= 0.9;
+                amp *= 0.8;
                 
                 // Use better lacunarity values (more moderate frequency increase)
-                freq *= 1.1;
+                freq *= 0.8;
             }
             
             // Normalize and add slight contrast adjustment
@@ -376,7 +370,7 @@ Presets / seed choice??
             // Saturation with GUI control
             float luminance = dot(color, vec3(0.299, 0.587, 0.114));
             vec3 saturatedColor = mix(vec3(luminance), color, saturation);
-            float satMix = 0.6 + cos(seed * 5.3) * 0.1;
+            float satMix = 0.9 + cos(seed * 5.3) * 0.2;
             color = mix(color, saturatedColor, satMix);
             
             gl_FragColor = vec4(color, 1.0);

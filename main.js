@@ -90,11 +90,11 @@ refreshPattern();
 // Initialize parameters object for dat.gui
 const params = {
     timeScale: 0.4,
-    patternAmp: 3.0,
+    patternAmp: 6.0,
     patternFreq: 0.5,
-    bloomStrength: 0.9,
-    saturation: 0.5,
-    grainAmount: 0.0,
+    bloomStrength: 2.7,
+    saturation: 0.15,
+    grainAmount: 0.5,
     colorTintR: 1.0,
     colorTintG: 1.0, 
     colorTintB: 1.0,
