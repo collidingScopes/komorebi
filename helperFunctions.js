@@ -31,7 +31,7 @@ window.addEventListener('keydown', (event) => {
   }
 
   if (event.code === 'KeyR') {
-    //randomizeInputs();
+    randomizeInputs();
   }
 
   if (event.code === 'KeyS') {
@@ -42,6 +42,49 @@ window.addEventListener('keydown', (event) => {
     toggleVideoRecord();
   }
 });
+
+// Function to randomize all GUI parameters
+function randomizeInputs() {
+  console.log("randomize inputs");
+  // Randomize timeScale (speed) between 0.2 and 1.5
+  params.timeScale = 0.2 + Math.random() * 1.3;
+  
+  // Randomize pattern controls
+  params.patternAmp = 1.0 + Math.random() * 9.0;
+  params.patternFreq = 0.2 + Math.random() * 1.8;
+  
+  // Randomize visual effects
+  params.bloomStrength = 1.0 + Math.random() * 4.0;
+  params.saturation = 0.05 + Math.random() * 0.95;
+  params.grainAmount = Math.random() * 0.8;
+  params.minCircleSize = 1.0 + Math.random() * 9.0;
+  params.minCircleThreshold = 0.2 + Math.random() * 1.8;
+  params.verticalFlowFactor = Math.random() * 2.0;
+  
+  // Randomize color tint
+  params.colorTintR = 0.5 + Math.random() * 1.0;
+  params.colorTintG = 0.5 + Math.random() * 1.0;
+  params.colorTintB = 0.5 + Math.random() * 1.0;
+  
+  // Update the GUI controllers to reflect the new values
+  for (let i in gui.__controllers) {
+    gui.__controllers[i].updateDisplay();
+  }
+  
+  // Update the folder controllers if any
+  for (let f in gui.__folders) {
+    const folder = gui.__folders[f];
+    for (let i in folder.__controllers) {
+      folder.__controllers[i].updateDisplay();
+    }
+  }
+  
+  // Update the uniforms in the shader
+  updateUniforms();
+  
+  // Generate a new pattern
+  refreshPattern();
+}
 
 //document.getElementById('randomizeBtn').addEventListener('click', () => randomizeInputs());
 //document.getElementById('exportVideoBtn').addEventListener('click', () => toggleVideoRecord());
