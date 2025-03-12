@@ -58,7 +58,10 @@ function randomizeInputs() {
   params.saturation = 0.05 + Math.random() * 0.95;
   params.grainAmount = Math.random() * 0.8;
   params.minCircleSize = 1.0 + Math.random() * 9.0;
-  params.minCircleThreshold = 0.2 + Math.random() * 1.8;
+  params.circleStrength = 0.2 + Math.random() * 2.8;
+  params.distortX = Math.random() * 50.0;
+  params.distortY = Math.random() * 50.0;
+
   params.verticalFlowFactor = Math.random() * 2.0;
   
   // Randomize color tint

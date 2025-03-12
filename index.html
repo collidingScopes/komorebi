@@ -53,7 +53,9 @@ button to restart script from time=0
         uniform float grainAmount;
         uniform vec3 colorTint;
         uniform float minCircleSize;
-        uniform float minCircleThreshold;
+        uniform float circleStrength;
+        uniform float distortX;
+        uniform float distortY;
         uniform float verticalFlowFactor;
         
         // Noise functions for 3D simplex noise
@@ -349,28 +351,28 @@ button to restart script from time=0
             float distortionAmount = 1.0 + cos(seed * 0.7) * 2.05;
             float distortion = sin(slowTime * 0.1 + seed) * distortionAmount;
             
-            vec2 distortedUV = fract(uv * 1.2 + vec2(
-                sin(uv.y * 2.0 + slowTime * 0.15 + seed * 0.8) * 0.5,
-                cos(uv.x * 1.8 + slowTime * 0.1 + seed * 0.9) * 4.1
+            vec2 distortedUV = fract(uv * 1.0 + vec2(
+                sin(uv.y * 2.0 + slowTime * 0.15 + seed * 0.8) * distortY,
+                cos(uv.x * 1.8 + slowTime * 0.1 + seed * 0.9) * distortX
             ));
             
             // Adjust circular spots with seed influence
             float circleSize = minCircleSize + sin(seed * 1.1) * 2.3;
-            float circleThreshold = minCircleThreshold + cos(seed * 1.3) * 2.05;
+            float circleThreshold = 0.0 + cos(seed * 1.3) * 2.05;
             float circularSpots = smoothstep(0.0, circleThreshold, 1.0 - length((distortedUV - 0.5) * (circleSize + distortion)));
             
             // Mix with liquid movement
-            float mixRatio = 0.0 + sin(seed * 1.5) * 2.5;
+            float mixRatio = 0.0 + sin(seed * 1.5) * circleStrength;
             lightSpots = mix(lightSpots, circularSpots * lightSpots, mixRatio);
             
             // Apply liquid-like diffusion with seed influence and 3D noise
             float diffusionScale = 0.0 + cos(seed * 1.7) * 5.0;
             float diffusedLightSpots = fbm3D(vec3(
                 uv * diffusionScale + vec2(
-                    sin(slowTime * 0.05 + uv.x + seed * 1.9) * 2.2,
-                    cos(slowTime * 0.04 + uv.y + seed * 2.1) * 0.2
+                    sin(slowTime * 0.03 + uv.x + seed * 1.9) * 0.2,
+                    cos(slowTime * 0.02 + uv.y + seed * 2.1) * 0.2
                 ),
-                slowTime * 0.03 + sin(seed * 0.76) * 0.5
+                slowTime * 0.15 + sin(seed * 0.76) * 0.5
             )) * lightSpots;
             
             // Mix diffusion with seed influence

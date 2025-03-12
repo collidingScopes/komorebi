@@ -78,7 +78,10 @@ const saturationLocation = gl.getUniformLocation(program, 'saturation');
 const grainAmountLocation = gl.getUniformLocation(program, 'grainAmount');
 const colorTintLocation = gl.getUniformLocation(program, 'colorTint');
 const minCircleSizeLocation = gl.getUniformLocation(program, 'minCircleSize');
-const minCircleThresholdLocation = gl.getUniformLocation(program, 'minCircleThreshold');
+const circleStrengthLocation = gl.getUniformLocation(program, 'circleStrength');
+const distortXLocation = gl.getUniformLocation(program, 'distortX');
+const distortYLocation = gl.getUniformLocation(program, 'distortY');
+
 const patternAmpLocation = gl.getUniformLocation(program, 'patternAmp');
 const patternFreqLocation = gl.getUniformLocation(program, 'patternFreq');
 const verticalFlowFactorLocation = gl.getUniformLocation(program, 'verticalFlowFactor');
@@ -99,7 +102,10 @@ const params = {
     colorTintG: 1.0, 
     colorTintB: 1.0,
     minCircleSize: 3.0,
-    minCircleThreshold: 0.5,
+    circleStrength: 1.0,
+    distortX: 5.0,
+    distortY: 20.0,
+
     verticalFlowFactor: 0.2,
     newPattern: function() {
         refreshPattern();
@@ -134,7 +140,10 @@ visualFolder.add(params, 'bloomStrength', 0.0, 5.0).name('Bloom').onChange(updat
 visualFolder.add(params, 'saturation', 0.0, 2.0).name('Saturation').onChange(updateUniforms);
 visualFolder.add(params, 'grainAmount', 0.0, 1.0).name('Grain').onChange(updateUniforms);
 visualFolder.add(params, 'minCircleSize', 0.0, 10.0).name('Circle Size').onChange(updateUniforms);
-visualFolder.add(params, 'minCircleThreshold', 0.0, 2.0).name('Circle Threshold').onChange(updateUniforms);
+visualFolder.add(params, 'circleStrength', 0.0, 3.0).name('Circle Strength').onChange(updateUniforms);
+visualFolder.add(params, 'distortX', 0.0, 50.0).name('Distort-X').onChange(updateUniforms);
+visualFolder.add(params, 'distortY', 0.0, 50.0).name('Distort-Y').onChange(updateUniforms);
+
 visualFolder.add(params, 'verticalFlowFactor', 0.0, 5.0).name('Vertical Flow').onChange(updateUniforms);
 visualFolder.open();
 
@@ -157,7 +166,10 @@ function updateUniforms() {
     gl.uniform1f(grainAmountLocation, params.grainAmount);
     gl.uniform3f(colorTintLocation, params.colorTintR, params.colorTintG, params.colorTintB);
     gl.uniform1f(minCircleSizeLocation, params.minCircleSize);
-    gl.uniform1f(minCircleThresholdLocation, params.minCircleThreshold);
+    gl.uniform1f(circleStrengthLocation, params.circleStrength);
+    gl.uniform1f(distortXLocation, params.distortX);
+    gl.uniform1f(distortYLocation, params.distortY);
+
     gl.uniform1f(verticalFlowFactorLocation, params.verticalFlowFactor);
 
 }
