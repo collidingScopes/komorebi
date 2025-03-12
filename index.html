@@ -39,7 +39,7 @@ button to restart script from time=0
 
     <script id="fragmentShader" type="x-shader/x-fragment">
         precision highp float;
-        
+
         uniform vec2 resolution;
         uniform float time;
         uniform float seed;
@@ -55,74 +55,105 @@ button to restart script from time=0
         uniform float minCircleSize;
         uniform float minCircleThreshold;
         uniform float verticalFlowFactor;
-
-        // Noise functions
-        float mod289(float x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-        vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        
+        // Noise functions for 3D simplex noise
         vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
         vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-        
-        float permute(float x) { return mod289(((x*34.0)+1.0)*x); }
-        vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
         vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
-        
-        float taylorInvSqrt(float r) { return 1.79284291400159 - 0.85373472095314 * r; }
         vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
         
         // Random function that uses the seed
         float rand(vec3 co) {
             return fract(sin(dot(co.xyz + vec3(seed * 0.1), vec3(12.9898, 78.233, 53.539))) * 43758.5453);
         }
-
+        
         // Pseudo-random function for noise generation
         float random(vec2 st) {
             return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
         }
         
-        // Simplex noise
-        float snoise(vec2 v) {
-            const vec4 C = vec4(0.211324865405187, 0.366025403784439,
-                                -0.577350269189626, 0.024390243902439);
-            
-            vec2 i  = floor(v + dot(v, C.yy));
-            vec2 x0 = v - i + dot(i, C.xx);
-            
-            vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-            vec4 x12 = x0.xyxy + C.xxzz;
-            x12.xy -= i1;
-            
-            i = mod289(i);
-            vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
-            
-            vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
-            m = m * m;
-            m = m * m;
-            
-            vec3 x = 2.0 * fract(p * C.www) - 1.0;
-            vec3 h = abs(x) - 0.5;
-            vec3 ox = floor(x + 0.5);
-            vec3 a0 = x - ox;
-            
-            m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
-            
-            vec3 g;
-            g.x = a0.x * x0.x + h.x * x0.y;
-            g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-            return 130.0 * dot(m, g);
+        // 3D Simplex noise implementation
+        float snoise3D(vec3 v) {
+          const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+          const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+        
+          // First corner
+          vec3 i  = floor(v + dot(v, C.yyy));
+          vec3 x0 = v - i + dot(i, C.xxx);
+        
+          // Other corners
+          vec3 g = step(x0.yzx, x0.xyz);
+          vec3 l = 1.0 - g;
+          vec3 i1 = min(g.xyz, l.zxy);
+          vec3 i2 = max(g.xyz, l.zxy);
+        
+          vec3 x1 = x0 - i1 + C.xxx;
+          vec3 x2 = x0 - i2 + C.yyy;
+          vec3 x3 = x0 - D.yyy;
+        
+          // Permutations
+          i = mod289(i);
+          vec4 p = permute(permute(permute(
+                    i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                  + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                  + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+        
+          // Gradients: 7x7 points over a square, mapped onto an octahedron.
+          // The ring size 17*17 = 289 is close to a multiple of 49 (49*6 = 294)
+          float n_ = 0.142857142857; // 1.0/7.0
+          vec3 ns = n_ * D.wyz - D.xzx;
+        
+          vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+        
+          vec4 x_ = floor(j * ns.z);
+          vec4 y_ = floor(j - 7.0 * x_);
+        
+          vec4 x = x_ *ns.x + ns.yyyy;
+          vec4 y = y_ *ns.x + ns.yyyy;
+          vec4 h = 1.0 - abs(x) - abs(y);
+        
+          vec4 b0 = vec4(x.xy, y.xy);
+          vec4 b1 = vec4(x.zw, y.zw);
+        
+          vec4 s0 = floor(b0)*2.0 + 1.0;
+          vec4 s1 = floor(b1)*2.0 + 1.0;
+          vec4 sh = -step(h, vec4(0.0));
+        
+          vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+          vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+        
+          vec3 p0 = vec3(a0.xy, h.x);
+          vec3 p1 = vec3(a0.zw, h.y);
+          vec3 p2 = vec3(a1.xy, h.z);
+          vec3 p3 = vec3(a1.zw, h.w);
+        
+          // Normalise gradients
+          vec4 norm = taylorInvSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
+          p0 *= norm.x;
+          p1 *= norm.y;
+          p2 *= norm.z;
+          p3 *= norm.w;
+        
+          // Mix final noise value
+          vec4 m = max(0.6 - vec4(dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), 0.0);
+          m = m * m;
+          return 42.0 * dot(m*m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
         }
         
-        float fbm(vec2 p) {
+        // Modified fbm function to use 3D noise
+        float fbm3D(vec3 p) {
             float sum = 0.0;
             float amp = patternAmp;
             float freq = patternFreq;
             
-            // Create more varied seed-based offsets using prime multipliers
-            vec2 seedOffset = vec2(
+            // Create seed-based offsets using prime multipliers
+            vec3 seedOffset = vec3(
                 sin(seed * 0.731) * cos(seed * 0.293) * 1.0,
-                cos(seed * 0.897) * sin(seed * 0.413) * 1.0
+                cos(seed * 0.897) * sin(seed * 0.413) * 1.0,
+                sin(seed * 0.529) * cos(seed * 0.671) * 1.0
             );
             
-            // Use more octaves with better frequency scaling
+            // Use octaves with better frequency scaling
             for(int i = 0; i < 2; i++) {
                 // Create unique rotation for each octave to break grid patterns
                 float angle = seed * 0.1 + float(i) * 0.01;
@@ -132,26 +163,29 @@ button to restart script from time=0
                 );
                 
                 // Rotate coordinates slightly for each octave
-                vec2 rotatedP = rotation * p;
+                vec2 rotatedP = rotation * p.xy;
+                vec3 rotated3D = vec3(rotatedP, p.z);
                 
                 // Use prime-number-based offsets to avoid repeating patterns
-                vec2 octaveOffset = seedOffset + vec2(
+                vec3 octaveOffset = seedOffset + vec3(
                     sin(float(i) * 1.731 + seed * 0.47),
-                    cos(float(i) * 1.293 + seed * 0.83)
+                    cos(float(i) * 1.293 + seed * 0.83),
+                    sin(float(i) * 1.453 + seed * 0.61)
                 );
                 
                 // Apply progressive domain warping for more organic results
-                vec2 warpedP = rotatedP + octaveOffset;
+                vec3 warpedP = rotated3D + octaveOffset;
                 if (i > 0) {
                     // Add slight domain warping based on previous octave
-                    warpedP += vec2(
+                    warpedP += vec3(
                         sin(sum * 2.14 + warpedP.y * 1.5),
-                        cos(sum * 1.71 + warpedP.x * 1.5)
+                        cos(sum * 1.71 + warpedP.x * 1.5),
+                        sin(sum * 1.93 + warpedP.z * 1.5)
                     ) * 0.1 * float(i);
                 }
                 
                 // Add contribution from this octave
-                sum += amp * snoise(warpedP * freq);
+                sum += amp * snoise3D(warpedP * freq);
                 
                 // Use better persistence values (slower amplitude reduction)
                 amp *= 0.8;
@@ -198,12 +232,14 @@ button to restart script from time=0
             // Apply depth offsets to create 3D layering effect
             vec2 depthFlow1 = flow1 + vec2(depthOffset1, depthOffset2) * 2.0;
             
-            // Main light layer with enhanced 3D liquid motion
-            float lightPattern = fbm(uv * noiseScale1 + depthFlow1);
-
+            // Main light layer with enhanced 3D liquid motion - using 3D noise
+            // The third component determines how the pattern changes over time
+            float timeComponent = slowTime * 0.1 + sin(seed * 0.63) * 0.2;
+            float lightPattern = fbm3D(vec3(uv * noiseScale1 + depthFlow1, timeComponent));
+        
             // Adjust weights using seed for more variation
             float combinedPattern = lightPattern * (0.25 + sin(seed) * 0.0);
-
+        
             // Start with a seed-influenced base color
             vec3 baseColor = vec3(
                 0.6 + sin(seed * 0.4) * 0.1,
@@ -244,9 +280,10 @@ button to restart script from time=0
             float noiseSeedFactor2 = 0.2 * (1.0 + cos(seed * 0.5) * 0.3);
             float noiseSeedFactor3 = 0.12 * (1.0 + sin(seed * 0.7) * 0.3);
             
-            float colorNoise1 = fbm(uv * noiseSeedFactor1 + liquidFlow1 * 0.3);
-            float colorNoise2 = fbm(uv * noiseSeedFactor2 + liquidFlow2 * 0.3);
-            float colorNoise3 = fbm(uv * noiseSeedFactor3 + liquidFlow3 * 0.25);
+            // Using 3D noise for color patterns with different time components for variety
+            float colorNoise1 = fbm3D(vec3(uv * noiseSeedFactor1 + liquidFlow1 * 0.3, slowTime * 0.05 + seed * 0.27));
+            float colorNoise2 = fbm3D(vec3(uv * noiseSeedFactor2 + liquidFlow2 * 0.3, slowTime * 0.07 + seed * 0.13));
+            float colorNoise3 = fbm3D(vec3(uv * noiseSeedFactor3 + liquidFlow3 * 0.25, slowTime * 0.09 + seed * 0.42));
             
             // Adjust thresholds with seed influence for variety
             float threshSeed1 = 0.0 + sin(seed * 0.4) * 0.15;
@@ -288,8 +325,9 @@ button to restart script from time=0
             float seedOffset1 = sin(seed * 2.1) * 0.05;
             float seedOffset2 = cos(seed * 2.3) * 0.05;
             
-            float mixValue4 = smoothstep(0.0, 0.7, fbm(uv * (0.18 + seedOffset1) + flow1 * 0.4));
-            float mixValue5 = smoothstep(0.0, 0.75, fbm(uv * (0.22 + seedOffset2) + flow2 * 0.35));
+            // Using 3D noise with different time components for additional variety
+            float mixValue4 = smoothstep(0.0, 0.7, fbm3D(vec3(uv * (0.18 + seedOffset1) + flow1 * 0.4, slowTime * 0.04 + seed * 0.19)));
+            float mixValue5 = smoothstep(0.0, 0.75, fbm3D(vec3(uv * (0.22 + seedOffset2) + flow2 * 0.35, slowTime * 0.06 + seed * 0.31)));
             
             float mixFactor10 = 1.7 + sin(seed * 2.5) * 0.4;
             float mixFactor11 = 1.8 + cos(seed * 2.7) * 0.4;
@@ -325,11 +363,14 @@ button to restart script from time=0
             float mixRatio = 0.0 + sin(seed * 1.5) * 2.5;
             lightSpots = mix(lightSpots, circularSpots * lightSpots, mixRatio);
             
-            // Apply liquid-like diffusion with seed influence
+            // Apply liquid-like diffusion with seed influence and 3D noise
             float diffusionScale = 0.0 + cos(seed * 1.7) * 5.0;
-            float diffusedLightSpots = fbm(uv * diffusionScale + vec2(
-                sin(slowTime * 0.05 + uv.x + seed * 1.9) * 2.2,
-                cos(slowTime * 0.04 + uv.y + seed * 2.1) * 0.2
+            float diffusedLightSpots = fbm3D(vec3(
+                uv * diffusionScale + vec2(
+                    sin(slowTime * 0.05 + uv.x + seed * 1.9) * 2.2,
+                    cos(slowTime * 0.04 + uv.y + seed * 2.1) * 0.2
+                ),
+                slowTime * 0.03 + sin(seed * 0.76) * 0.5
             )) * lightSpots;
             
             // Mix diffusion with seed influence
@@ -351,18 +392,14 @@ button to restart script from time=0
             color += bloom;
             
             // Grain with GUI-controlled grainAmount
-            //float grain = rand(vec3(gl_FragCoord.xy, time + seed)) * grainAmount;
-            //float grainMix = 0.2 + cos(seed * 3.3) * 0.05;
-            //color = mix(color, vec3(grain), grainMix);
-                        
-            //color adjustments with seed influence
-            color = pow(color, vec3(1.0 + sin(seed * 4.3) * 0.1));
-            color = color * (0.6 + cos(seed * 4.5) * 0.05);
-
             vec2 noiseCoord = gl_FragCoord.xy / 1.5;
             float noise = random(noiseCoord + time * 0.0005) * 0.12 - 0.075;        
             color = color + vec3(noise);
-
+                            
+            // Color adjustments with seed influence
+            color = pow(color, vec3(1.0 + sin(seed * 4.3) * 0.1));
+            color = color * (0.6 + cos(seed * 4.5) * 0.05);
+        
             // Color temperature with seed influence
             float tempFactor = 1.05 + cos(seed * 4.9) * 0.02;
             color = mix(color, color * vec3(tempFactor, tempFactor, tempFactor), 0.3);
