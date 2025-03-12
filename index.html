@@ -48,11 +48,25 @@ Ability to add this shader effect on top of an image?
         #refreshButton:hover {
             background-color: rgba(255, 255, 255, 0.5);
         }
+
+        #textOverlay {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
     <canvas id="komorebi"></canvas>
     <button id="refreshButton">New Pattern</button>
+    <!-- Add a small help text for users -->
+    <div id="textOverlay">
+        <p>Komorebi - Sunlight Through Trees</p>
+        <p id="seedIndicator">Seed:</p>
+    </div>
 
     <script id="vertexShader" type="x-shader/x-vertex">
         attribute vec2 position;
@@ -70,14 +84,18 @@ Ability to add this shader effect on top of an image?
         
         // GUI-controlled parameters
         uniform float timeScale;
-        uniform float noiseScale;
+        uniform float patternAmp;
+        uniform float patternFreq;
         uniform float bloomStrength;
         uniform float saturation;
         uniform float grainAmount;
         uniform float bokehSize;
         uniform float bokehIntensity;
         uniform vec3 colorTint;
-        
+        uniform float minCircleSize;
+        uniform float minCircleThreshold;
+        uniform float verticalFlowFactor;
+
         // Noise functions
         float mod289(float x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
         vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -131,8 +149,8 @@ Ability to add this shader effect on top of an image?
         // Create larger, more prominent color patches with seed-based randomness
         float fbm(vec2 p) {
             float sum = 0.0;
-            float amp = 3.0;
-            float freq = 0.6;
+            float amp = patternAmp;
+            float freq = patternFreq;
             // Add seed-based offset for variation between refreshes
             vec2 seedOffset = vec2(sin(seed), cos(seed * 1.5)) * 3.0;
             
@@ -140,8 +158,8 @@ Ability to add this shader effect on top of an image?
                 // Add unique seed-influenced offset for each octave
                 vec2 octaveOffset = seedOffset * (0.5 + float(i) * 0.1);
                 sum += amp * snoise((p + octaveOffset) * freq);
-                amp *= 0.6;
-                freq *= 1.5;
+                amp *= 0.1;
+                freq *= 0.1;
             }
             return sum * 0.5 + 0.5;
         }
@@ -171,21 +189,14 @@ Ability to add this shader effect on top of an image?
                 cos(slowTime * 0.18 + 1.2 + seed * 0.37) * 0.25 + cos(slowTime * 0.33 + seed * 0.27) * 0.15
             );
             
-            // Modify noise scales with GUI and seed influence
-            float seedFactor = 0.8 + sin(seed) * 4.4; // Range 0.4-1.2 for variety
-            float noiseScale1 = 1500.0 * seedFactor * noiseScale;
-            float noiseScale2 = 20.0 * (1.0 + cos(seed * 0.7) * 0.3) * noiseScale;
-            float noiseScale3 = 10.0 * (1.0 + sin(seed * 1.3) * 0.3) * noiseScale;
+            float noiseScale1 = 10000.0;
             
             // Create depth layers with seed randomization
-            float depthOffset1 = sin(slowTime * 0.2 + seed * 0.5) * 0.15;
-            float depthOffset2 = cos(slowTime * 0.15 + seed * 0.7) * 0.25;
-            float depthOffset3 = sin(slowTime * 0.18 + 1.5 + seed * 0.3) * 0.2;
+            float depthOffset1 = sin(slowTime * 0.02 + seed * 0.5) * 6.15;
+            float depthOffset2 = sin(slowTime * 0.02 + seed * 0.7) * 12.25;
             
             // Apply depth offsets to create 3D layering effect
-            vec2 depthFlow1 = flow1 + vec2(depthOffset1, depthOffset2);
-            vec2 depthFlow2 = flow2 + vec2(depthOffset3, depthOffset1);
-            vec2 depthFlow3 = flow3 + vec2(depthOffset2, depthOffset3);
+            vec2 depthFlow1 = flow1 + vec2(depthOffset1, depthOffset2) * 2.0;
             
             // Main light layer with enhanced 3D liquid motion
             float lightPattern = fbm(uv * noiseScale1 + depthFlow1);
@@ -221,7 +232,7 @@ Ability to add this shader effect on top of an image?
             vec3 pastelSkyBlue = vec3(0.85 + colorSeed2, 0.91 + colorSeed1, 0.98 + colorSeed3);
             
             // Using larger color patches with 3D liquid-like noise and seed influence
-            float verticalFlow = sin(uv.y * 3.0 + slowTime * 0.2 + seed * 0.4) * 0.3;
+            float verticalFlow = sin(uv.y * 3.0 + slowTime * 0.2 + seed * 0.4) * verticalFlowFactor;
             
             // Creating more complex flow patterns for liquid movement
             vec2 liquidFlow1 = flow1 + vec2(verticalFlow, sin(uv.x * 2.5 + slowTime * 0.15 + seed * 0.3) * 0.2);
@@ -289,16 +300,16 @@ Ability to add this shader effect on top of an image?
             colorVariation = mix(colorVariation, pastelSkyBlue, mixValue4 * mixValue5 * mixFactor12);
             
             // Adjust pattern brightness with seed influence
-            float brightnessFactor = 3.0 + sin(seed * 0.5) * 0.1;
+            float brightnessFactor = 1.0 + sin(seed * 0.5) * 2.1;
             combinedPattern = pow(combinedPattern * 0.2 + 0.8, brightnessFactor);
             
             // Create light spots with seed-influenced threshold
-            float lightThreshold = 0.3 + sin(seed * 0.6) * 0.1;
+            float lightThreshold = 1.0 + sin(seed * 0.6) * 2.1;
             float lightSpots = smoothstep(0.0, lightThreshold, combinedPattern);
             
             // Enhanced circular light patterns with seed-influenced distortion
-            float distortionAmount = 0.05 + cos(seed * 0.7) * 0.05;
-            float distortion = sin(slowTime * 0.2 + seed) * distortionAmount;
+            float distortionAmount = 1.0 + cos(seed * 0.7) * 2.05;
+            float distortion = sin(slowTime * 0.1 + seed) * distortionAmount;
             
             vec2 distortedUV = fract(uv * 1.2 + vec2(
                 sin(uv.y * 2.0 + slowTime * 0.15 + seed * 0.8) * 0.5,
@@ -306,8 +317,8 @@ Ability to add this shader effect on top of an image?
             ));
             
             // Adjust circular spots with seed influence and GUI bokehSize
-            float circleSize = 1.0 + sin(seed * 1.1) * 2.3;
-            float circleThreshold = 0.2 + cos(seed * 1.3) * 2.05;
+            float circleSize = minCircleSize + sin(seed * 1.1) * 2.3;
+            float circleThreshold = minCircleThreshold + cos(seed * 1.3) * 2.05;
             float circularSpots = smoothstep(0.0, circleThreshold, 1.0 - length((distortedUV - 0.5) * (circleSize + distortion)));
             
             // Mix with liquid movement
@@ -317,7 +328,7 @@ Ability to add this shader effect on top of an image?
             // Apply liquid-like diffusion with seed influence
             float diffusionScale = 0.0 + cos(seed * 1.7) * 5.0;
             float diffusedLightSpots = fbm(uv * diffusionScale + vec2(
-                sin(slowTime * 0.05 + uv.x + seed * 1.9) * 0.2,
+                sin(slowTime * 0.05 + uv.x + seed * 1.9) * 2.2,
                 cos(slowTime * 0.04 + uv.y + seed * 2.1) * 0.2
             )) * lightSpots;
             
@@ -360,22 +371,18 @@ Ability to add this shader effect on top of an image?
                                             bokehSize * (1.0 + 0.2), 
                                             dist);
                 
-                bokehMask *= (1.0 - rand(vec3(bokehUV * 10.0, time + seed * float(i))) * 0.1);
+                bokehMask *= (1.0 - rand(vec3(bokehUV * 2.0, time + seed * float(i))) * 0.1);
                 
                 float bokehThreshold = 0.7 + sin(seed * (4.1 + float(i) * 0.2)) * 0.1;
                 bokehMask *= smoothstep(0.0, bokehThreshold, finalValue);
                 
-                color += bokehMask * bokehIntensity;
+                //color += bokehMask * bokehIntensity;
             }
             
             // Final color adjustments with seed influence
             color = pow(color, vec3(1.0 + sin(seed * 4.3) * 0.1));
             color = color * (0.6 + cos(seed * 4.5) * 0.05);
-            
-            // Ensure minimum brightness with seed influence
-            vec3 minColor = vec3(0.1 + sin(seed * 4.7) * 0.05);
-            color = max(color, minColor);
-            
+
             // Color temperature with seed influence
             float tempFactor = 1.05 + cos(seed * 4.9) * 0.02;
             color = mix(color, color * vec3(tempFactor, tempFactor, tempFactor), 0.3);
@@ -460,30 +467,38 @@ Ability to add this shader effect on top of an image?
         
         // GUI-controlled uniform locations
         const timeScaleLocation = gl.getUniformLocation(program, 'timeScale');
-        const noiseScaleLocation = gl.getUniformLocation(program, 'noiseScale');
         const bloomStrengthLocation = gl.getUniformLocation(program, 'bloomStrength');
         const saturationLocation = gl.getUniformLocation(program, 'saturation');
         const grainAmountLocation = gl.getUniformLocation(program, 'grainAmount');
         const bokehSizeLocation = gl.getUniformLocation(program, 'bokehSize');
         const bokehIntensityLocation = gl.getUniformLocation(program, 'bokehIntensity');
         const colorTintLocation = gl.getUniformLocation(program, 'colorTint');
-        
+        const minCircleSizeLocation = gl.getUniformLocation(program, 'minCircleSize');
+        const minCircleThresholdLocation = gl.getUniformLocation(program, 'minCircleThreshold');
+        const patternAmpLocation = gl.getUniformLocation(program, 'patternAmp');
+        const patternFreqLocation = gl.getUniformLocation(program, 'patternFreq');
+        const verticalFlowFactorLocation = gl.getUniformLocation(program, 'verticalFlowFactor');
+
         // Set initial random seed
-        let randomSeed = Math.random() * 100;
-        gl.uniform1f(seedLocation, randomSeed);
+        let randomSeed;
+        refreshPattern();
         
         // Initialize parameters object for dat.gui
         const params = {
             timeScale: 0.4,
-            noiseScale: 1.0,
+            patternAmp: 3.0,
+            patternFreq: 0.5,
             bloomStrength: 0.7,
             saturation: 0.5,
-            grainAmount: 0.45,
-            bokehSize: 2.0,
-            bokehIntensity: 0.01,
+            grainAmount: 0.0,
+            bokehSize: 1.0,
+            bokehIntensity: 0.04,
             colorTintR: 1.0,
             colorTintG: 1.0, 
             colorTintB: 1.0,
+            minCircleSize: 3.0,
+            minCircleThreshold: 0.5,
+            verticalFlowFactor: 0.2,
             newPattern: function() {
                 refreshPattern();
             }
@@ -491,8 +506,9 @@ Ability to add this shader effect on top of an image?
         
         // Function to refresh the pattern with a new random seed
         function refreshPattern() {
-            randomSeed = Math.random() * 100;
+            randomSeed = Math.floor(Math.random() * 1000,0);
             gl.uniform1f(seedLocation, randomSeed);
+            document.querySelector("#seedIndicator").textContent = "Seed: "+randomSeed;
         }
         
         // Add event listener to refresh button
@@ -503,25 +519,30 @@ Ability to add this shader effect on top of an image?
         
         // Initialize dat.gui
         const gui = new dat.GUI({ width: 300 });
-        
+        gui.close();
+
         // Add GUI controls with folders for organization
         const timeFolder = gui.addFolder('Animation');
         timeFolder.add(params, 'timeScale', 0.1, 3.0).name('Speed').onChange(updateUniforms);
         timeFolder.open();
         
         const patternFolder = gui.addFolder('Pattern');
-        patternFolder.add(params, 'noiseScale', 0.1, 3.0).name('Noise Scale').onChange(updateUniforms);
+        patternFolder.add(params, 'patternAmp', 0.1, 10.0).step(0.1).name('Pattern Amp').onChange(updateUniforms);
+        patternFolder.add(params, 'patternFreq', 0.1, 10.0).step(0.1).name('Pattern Freq').onChange(updateUniforms);
         patternFolder.open();
         
         const visualFolder = gui.addFolder('Visual Effects');
-        visualFolder.add(params, 'bloomStrength', 0.0, 2.0).name('Bloom').onChange(updateUniforms);
+        visualFolder.add(params, 'bloomStrength', 0.0, 5.0).name('Bloom').onChange(updateUniforms);
         visualFolder.add(params, 'saturation', 0.0, 2.0).name('Saturation').onChange(updateUniforms);
         visualFolder.add(params, 'grainAmount', 0.0, 1.0).name('Grain').onChange(updateUniforms);
+        visualFolder.add(params, 'minCircleSize', 0.0, 10.0).name('Circle Size').onChange(updateUniforms);
+        visualFolder.add(params, 'minCircleThreshold', 0.0, 2.0).name('Circle Threshold').onChange(updateUniforms);
+        visualFolder.add(params, 'verticalFlowFactor', 0.0, 5.0).name('Vertical Flow').onChange(updateUniforms);
         visualFolder.open();
         
         const bokehFolder = gui.addFolder('Bokeh');
-        bokehFolder.add(params, 'bokehSize', 0.5, 5.0).name('Size').onChange(updateUniforms);
-        bokehFolder.add(params, 'bokehIntensity', 0.0, 0.25).name('Intensity').onChange(updateUniforms);
+        bokehFolder.add(params, 'bokehSize', 0.0, 1.5).name('Size').onChange(updateUniforms);
+        bokehFolder.add(params, 'bokehIntensity', 0.0, 1.0).name('Intensity').onChange(updateUniforms);
         bokehFolder.open();
         
         const colorFolder = gui.addFolder('Color Tint');
@@ -535,13 +556,18 @@ Ability to add this shader effect on top of an image?
         // Function to update shader uniforms from GUI values
         function updateUniforms() {
             gl.uniform1f(timeScaleLocation, params.timeScale);
-            gl.uniform1f(noiseScaleLocation, params.noiseScale);
+            gl.uniform1f(patternAmpLocation, params.patternAmp);
+            gl.uniform1f(patternFreqLocation, params.patternFreq);
             gl.uniform1f(bloomStrengthLocation, params.bloomStrength);
             gl.uniform1f(saturationLocation, params.saturation);
             gl.uniform1f(grainAmountLocation, params.grainAmount);
             gl.uniform1f(bokehSizeLocation, params.bokehSize);
             gl.uniform1f(bokehIntensityLocation, params.bokehIntensity);
             gl.uniform3f(colorTintLocation, params.colorTintR, params.colorTintG, params.colorTintB);
+            gl.uniform1f(minCircleSizeLocation, params.minCircleSize);
+            gl.uniform1f(minCircleThresholdLocation, params.minCircleThreshold);
+            gl.uniform1f(verticalFlowFactorLocation, params.verticalFlowFactor);
+
         }
         
         // Set initial uniform values
@@ -549,7 +575,7 @@ Ability to add this shader effect on top of an image?
         
         // Animation loop
         function render(time) {
-            time *= 0.01; // Convert to seconds
+            time *= 0.005; // Convert to seconds
             
             gl.uniform1f(timeLocation, time);
             gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
@@ -563,10 +589,5 @@ Ability to add this shader effect on top of an image?
         requestAnimationFrame(render);
     </script>
     
-    <!-- Add a small help text for users -->
-    <div style="position: fixed; bottom: 20px; left: 20px; color: rgba(255,255,255,0.6); font-size: 14px; pointer-events: none;">
-        <p>Komorebi - Sunlight Through Trees</p>
-        <p>Use the controls to adjust the animation</p>
-    </div>
 </body>
 </html>
