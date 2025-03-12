@@ -89,8 +89,6 @@ Ability to add this shader effect on top of an image?
         uniform float bloomStrength;
         uniform float saturation;
         uniform float grainAmount;
-        uniform float bokehSize;
-        uniform float bokehIntensity;
         uniform vec3 colorTint;
         uniform float minCircleSize;
         uniform float minCircleThreshold;
@@ -316,7 +314,7 @@ Ability to add this shader effect on top of an image?
                 cos(uv.x * 1.8 + slowTime * 0.1 + seed * 0.9) * 4.1
             ));
             
-            // Adjust circular spots with seed influence and GUI bokehSize
+            // Adjust circular spots with seed influence
             float circleSize = minCircleSize + sin(seed * 1.1) * 2.3;
             float circleThreshold = minCircleThreshold + cos(seed * 1.3) * 2.05;
             float circularSpots = smoothstep(0.0, circleThreshold, 1.0 - length((distortedUV - 0.5) * (circleSize + distortion)));
@@ -346,7 +344,7 @@ Ability to add this shader effect on top of an image?
             vec3 color = finalValue * colorVariation * colorTint;
             
             // Bloom with GUI-controlled bloomStrength
-            float bloomThreshold = 1.0 + sin(seed * 2.7) * 0.1;
+            float bloomThreshold = 1.0;
             float bloom = smoothstep(0.0, bloomThreshold, finalValue) * bloomStrength;
             color += bloom;
             
@@ -354,31 +352,7 @@ Ability to add this shader effect on top of an image?
             float grain = rand(vec3(gl_FragCoord.xy, time + seed)) * grainAmount;
             float grainMix = 0.2 + cos(seed * 3.3) * 0.05;
             color = mix(color, vec3(grain), grainMix);
-            
-            // Bokeh effect with GUI-controlled bokehSize and bokehIntensity
-            vec2 bokehUV = uv * 2.0 - 1.0;
-            
-            // Create bokeh spots with seed-influenced positioning
-            for (int i = 0; i < 5; i++) {
-                float t = slowTime * 0.15 + float(i) * 1.37 + seed * (0.1 + float(i) * 0.05);
-                vec2 bokehPos = vec2(
-                    sin(t * 0.43 + seed * (0.2 + float(i) * 0.1)) * 0.6 + sin(t * 0.17 + seed * 0.3) * 0.2,
-                    cos(t * 0.27 + seed * (0.4 + float(i) * 0.1)) * 0.6 + cos(t * 0.11 + seed * 0.5) * 0.2
-                );
-                
-                float dist = length(bokehUV - bokehPos);
-                float bokehMask = 1.0 - smoothstep(bokehSize * (1.0 - 0.2), 
-                                            bokehSize * (1.0 + 0.2), 
-                                            dist);
-                
-                bokehMask *= (1.0 - rand(vec3(bokehUV * 2.0, time + seed * float(i))) * 0.1);
-                
-                float bokehThreshold = 0.7 + sin(seed * (4.1 + float(i) * 0.2)) * 0.1;
-                bokehMask *= smoothstep(0.0, bokehThreshold, finalValue);
-                
-                //color += bokehMask * bokehIntensity;
-            }
-            
+                        
             // Final color adjustments with seed influence
             color = pow(color, vec3(1.0 + sin(seed * 4.3) * 0.1));
             color = color * (0.6 + cos(seed * 4.5) * 0.05);
@@ -470,8 +444,6 @@ Ability to add this shader effect on top of an image?
         const bloomStrengthLocation = gl.getUniformLocation(program, 'bloomStrength');
         const saturationLocation = gl.getUniformLocation(program, 'saturation');
         const grainAmountLocation = gl.getUniformLocation(program, 'grainAmount');
-        const bokehSizeLocation = gl.getUniformLocation(program, 'bokehSize');
-        const bokehIntensityLocation = gl.getUniformLocation(program, 'bokehIntensity');
         const colorTintLocation = gl.getUniformLocation(program, 'colorTint');
         const minCircleSizeLocation = gl.getUniformLocation(program, 'minCircleSize');
         const minCircleThresholdLocation = gl.getUniformLocation(program, 'minCircleThreshold');
@@ -488,11 +460,9 @@ Ability to add this shader effect on top of an image?
             timeScale: 0.4,
             patternAmp: 3.0,
             patternFreq: 0.5,
-            bloomStrength: 0.7,
+            bloomStrength: 0.9,
             saturation: 0.5,
             grainAmount: 0.0,
-            bokehSize: 1.0,
-            bokehIntensity: 0.04,
             colorTintR: 1.0,
             colorTintG: 1.0, 
             colorTintB: 1.0,
@@ -540,11 +510,6 @@ Ability to add this shader effect on top of an image?
         visualFolder.add(params, 'verticalFlowFactor', 0.0, 5.0).name('Vertical Flow').onChange(updateUniforms);
         visualFolder.open();
         
-        const bokehFolder = gui.addFolder('Bokeh');
-        bokehFolder.add(params, 'bokehSize', 0.0, 1.5).name('Size').onChange(updateUniforms);
-        bokehFolder.add(params, 'bokehIntensity', 0.0, 1.0).name('Intensity').onChange(updateUniforms);
-        bokehFolder.open();
-        
         const colorFolder = gui.addFolder('Color Tint');
         colorFolder.add(params, 'colorTintR', 0.0, 1.5).name('Red').onChange(updateUniforms);
         colorFolder.add(params, 'colorTintG', 0.0, 1.5).name('Green').onChange(updateUniforms);
@@ -561,8 +526,6 @@ Ability to add this shader effect on top of an image?
             gl.uniform1f(bloomStrengthLocation, params.bloomStrength);
             gl.uniform1f(saturationLocation, params.saturation);
             gl.uniform1f(grainAmountLocation, params.grainAmount);
-            gl.uniform1f(bokehSizeLocation, params.bokehSize);
-            gl.uniform1f(bokehIntensityLocation, params.bokehIntensity);
             gl.uniform3f(colorTintLocation, params.colorTintR, params.colorTintG, params.colorTintB);
             gl.uniform1f(minCircleSizeLocation, params.minCircleSize);
             gl.uniform1f(minCircleThresholdLocation, params.minCircleThreshold);
