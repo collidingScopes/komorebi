@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Komorebi - Sunlight Through Trees</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        #refreshButton {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        #refreshButton:hover {
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="komorebi"></canvas>
+    <button id="refreshButton">New Pattern</button>
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+        attribute vec2 position;
+        void main() {
+            gl_Position = vec4(position, 0.0, 1.0);
+        }
+    </script>
+
+    <script id="fragmentShader" type="x-shader/x-fragment">
+        precision highp float;
+        
+        uniform vec2 resolution;
+        uniform float time;
+        uniform float seed;
+        
+        // GUI-controlled parameters
+        uniform float timeScale;
+        uniform float noiseScale;
+        uniform float bloomStrength;
+        uniform float saturation;
+        uniform float grainAmount;
+        uniform float bokehSize;
+        uniform float bokehIntensity;
+        uniform vec3 colorTint;
+        
+        // Noise functions
+        float mod289(float x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        
+        float permute(float x) { return mod289(((x*34.0)+1.0)*x); }
+        vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
+        vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+        
+        float taylorInvSqrt(float r) { return 1.79284291400159 - 0.85373472095314 * r; }
+        vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+        
+        // Random function that uses the seed
+        float rand(vec3 co) {
+            return fract(sin(dot(co.xyz + vec3(seed * 0.1), vec3(12.9898, 78.233, 53.539))) * 43758.5453);
+        }
+        
+        // Simplex noise
+        float snoise(vec2 v) {
+            const vec4 C = vec4(0.211324865405187, 0.366025403784439,
+                                -0.577350269189626, 0.024390243902439);
+            
+            vec2 i  = floor(v + dot(v, C.yy));
+            vec2 x0 = v - i + dot(i, C.xx);
+            
+            vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+            vec4 x12 = x0.xyxy + C.xxzz;
+            x12.xy -= i1;
+            
+            i = mod289(i);
+            vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+            
+            vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
+            m = m * m;
+            m = m * m;
+            
+            vec3 x = 2.0 * fract(p * C.www) - 1.0;
+            vec3 h = abs(x) - 0.5;
+            vec3 ox = floor(x + 0.5);
+            vec3 a0 = x - ox;
+            
+            m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
+            
+            vec3 g;
+            g.x = a0.x * x0.x + h.x * x0.y;
+            g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+            return 130.0 * dot(m, g);
+        }
+        
+        // Create larger, more prominent color patches with seed-based randomness
+        float fbm(vec2 p) {
+            float sum = 0.0;
+            float amp = 4.0;
+            float freq = 0.3;
+            // Add seed-based offset for variation between refreshes
+            vec2 seedOffset = vec2(sin(seed), cos(seed * 1.5)) * 10.0;
+            
+            for(int i = 0; i < 3; i++) {
+                // Add unique seed-influenced offset for each octave
+                vec2 octaveOffset = seedOffset * (0.5 + float(i) * 0.1);
+                sum += amp * snoise((p + octaveOffset) * freq);
+                amp *= 0.6;
+                freq *= 1.5;
+            }
+            return sum * 0.5 + 0.5;
+        }
+        
+        void main() {
+            vec2 uv = gl_FragCoord.xy / resolution.xy;
+            
+            // Adjust aspect ratio
+            uv.x *= resolution.x / resolution.y;
+            
+            // Apply timeScale from GUI
+            float slowTime = time * timeScale;
+            
+            // Create seed-influenced flow vectors for different pattern on each refresh
+            vec2 flow1 = vec2(
+                sin(slowTime * 0.31 + seed * 0.42) * 0.3 + sin(slowTime * 0.17 + seed * 0.23) * 0.2,
+                cos(slowTime * 0.27 + seed * 0.31) * 0.3 + cos(slowTime * 0.13 + seed * 0.17) * 0.2
+            );
+            
+            vec2 flow2 = vec2(
+                sin(slowTime * 0.19 + 1.7 + seed * 0.13) * 0.4 + sin(slowTime * 0.23 + seed * 0.29) * 0.1,
+                cos(slowTime * 0.22 + 2.3 + seed * 0.19) * 0.4 + cos(slowTime * 0.11 + seed * 0.33) * 0.1
+            );
+            
+            vec2 flow3 = vec2(
+                sin(slowTime * 0.15 + 3.4 + seed * 0.25) * 0.25 + sin(slowTime * 0.29 + seed * 0.11) * 0.15,
+                cos(slowTime * 0.18 + 1.2 + seed * 0.37) * 0.25 + cos(slowTime * 0.33 + seed * 0.27) * 0.15
+            );
+            
+            // Modify noise scales with GUI and seed influence
+            float seedFactor = 0.8 + sin(seed) * 0.4; // Range 0.4-1.2 for variety
+            float noiseScale1 = 1500.0 * seedFactor * noiseScale;
+            float noiseScale2 = 20.0 * (1.0 + cos(seed * 0.7) * 0.3) * noiseScale;
+            float noiseScale3 = 10.0 * (1.0 + sin(seed * 1.3) * 0.3) * noiseScale;
+            
+            // Create depth layers with seed randomization
+            float depthOffset1 = sin(slowTime * 0.2 + seed * 0.5) * 0.15;
+            float depthOffset2 = cos(slowTime * 0.15 + seed * 0.7) * 0.25;
+            float depthOffset3 = sin(slowTime * 0.18 + 1.5 + seed * 0.3) * 0.2;
+            
+            // Apply depth offsets to create 3D layering effect
+            vec2 depthFlow1 = flow1 + vec2(depthOffset1, depthOffset2);
+            vec2 depthFlow2 = flow2 + vec2(depthOffset3, depthOffset1);
+            vec2 depthFlow3 = flow3 + vec2(depthOffset2, depthOffset3);
+            
+            // Main light layer with enhanced 3D liquid motion
+            float lightPattern = fbm(uv * noiseScale1 + depthFlow1);
+            
+            // Secondary layers with enhanced 3D liquid motion
+            float leafPattern1 = fbm(uv * noiseScale2 + depthFlow2);
+            float leafPattern2 = fbm(uv * noiseScale3 + depthFlow3);
+            
+            // Adjust weights using seed for more variation
+            float combinedPattern = lightPattern * (0.5 + sin(seed) * 0.15) + 
+                                  leafPattern1 * (0.3 + cos(seed * 0.7) * 0.1) + 
+                                  leafPattern2 * (0.2 + sin(seed * 1.3) * 0.1);
+            
+            // Start with a seed-influenced base color
+            vec3 baseColor = vec3(
+                0.3 + sin(seed * 0.4) * 0.1,
+                0.9 + cos(seed * 0.3) * 0.05,
+                0.92 + sin(seed * 0.5) * 0.05
+            );
+            
+            // Define pastel colors with slight seed-based variations
+            float colorSeed1 = sin(seed * 0.73) * 0.08;
+            float colorSeed2 = cos(seed * 0.51) * 0.08;
+            float colorSeed3 = sin(seed * 0.92) * 0.08;
+            
+            vec3 pastelGreen = vec3(0.85 + colorSeed1, 0.95 + colorSeed2, 0.85 + colorSeed3);
+            vec3 pastelBlue = vec3(0.85 + colorSeed3, 0.9 + colorSeed1, 0.98 + colorSeed2);
+            vec3 pastelPink = vec3(0.98 + colorSeed2, 0.88 + colorSeed3, 0.92 + colorSeed1);
+            vec3 pastelYellow = vec3(0.98 + colorSeed3, 0.95 + colorSeed1, 0.85 + colorSeed2);
+            vec3 brightPink = vec3(0.98 + colorSeed1, 0.85 + colorSeed2, 0.92 + colorSeed3);
+            
+            // Additional pastel colors with seed variations
+            vec3 pastelLavender = vec3(0.92 + colorSeed2, 0.88 + colorSeed3, 0.98 + colorSeed1);
+            vec3 pastelPeach = vec3(0.98 + colorSeed3, 0.92 + colorSeed1, 0.87 + colorSeed2);
+            vec3 pastelTeal = vec3(0.85 + colorSeed1, 0.95 + colorSeed2, 0.95 + colorSeed3);
+            vec3 pastelCoral = vec3(0.98 + colorSeed2, 0.88 + colorSeed1, 0.85 + colorSeed3);
+            vec3 pastelMint = vec3(0.88 + colorSeed3, 0.98 + colorSeed2, 0.91 + colorSeed1);
+            vec3 pastelLilac = vec3(0.91 + colorSeed1, 0.85 + colorSeed3, 0.98 + colorSeed2);
+            vec3 pastelSkyBlue = vec3(0.85 + colorSeed2, 0.91 + colorSeed1, 0.98 + colorSeed3);
+            
+            // Using larger color patches with 3D liquid-like noise and seed influence
+            float verticalFlow = sin(uv.y * 3.0 + slowTime * 0.2 + seed * 0.4) * 0.3;
+            
+            // Creating more complex flow patterns for liquid movement
+            vec2 liquidFlow1 = flow1 + vec2(verticalFlow, sin(uv.x * 2.5 + slowTime * 0.15 + seed * 0.3) * 0.2);
+            vec2 liquidFlow2 = flow2 + vec2(cos(uv.y * 2.2 + slowTime * 0.1 + seed * 0.5) * 0.15, verticalFlow);
+            vec2 liquidFlow3 = flow3 + vec2(verticalFlow * 0.5, cos(uv.x * 1.8 - slowTime * 0.12 + seed * 0.7) * 0.25);
+            
+            // Add seed-dependent scale factors for noise
+            float noiseSeedFactor1 = 0.15 * (1.0 + sin(seed * 0.3) * 0.3);
+            float noiseSeedFactor2 = 0.2 * (1.0 + cos(seed * 0.5) * 0.3);
+            float noiseSeedFactor3 = 0.12 * (1.0 + sin(seed * 0.7) * 0.3);
+            
+            float colorNoise1 = fbm(uv * noiseSeedFactor1 + liquidFlow1 * 0.3);
+            float colorNoise2 = fbm(uv * noiseSeedFactor2 + liquidFlow2 * 0.3);
+            float colorNoise3 = fbm(uv * noiseSeedFactor3 + liquidFlow3 * 0.25);
+            
+            // Adjust thresholds with seed influence for variety
+            float threshSeed1 = 0.7 + sin(seed * 0.4) * 0.15;
+            float threshSeed2 = 0.65 + cos(seed * 0.6) * 0.15;
+            float threshSeed3 = 0.75 + sin(seed * 0.8) * 0.15;
+            
+            float colorMixValue1 = smoothstep(0.0, threshSeed1, colorNoise1);
+            float colorMixValue2 = smoothstep(0.0, threshSeed2, colorNoise2);
+            float colorMixValue3 = smoothstep(0.0, threshSeed3, colorNoise3);
+            
+            // Start with base color and mix in expanded pastel palette
+            vec3 colorVariation = baseColor;
+            
+            // Layer 1: Primary colors with seed-influenced mix factors
+            float mixFactor1 = 2.2 + sin(seed * 0.3) * 0.5;
+            float mixFactor2 = 2.0 + cos(seed * 0.5) * 0.5;
+            float mixFactor3 = 2.0 + sin(seed * 0.7) * 0.5;
+            float mixFactor4 = 2.0 + cos(seed * 0.9) * 0.5;
+            
+            colorVariation = mix(colorVariation, pastelBlue, colorMixValue1 * mixFactor1);
+            colorVariation = mix(colorVariation, pastelPink, (1.0 - colorMixValue1) * colorMixValue2 * mixFactor2);
+            colorVariation = mix(colorVariation, pastelGreen, colorMixValue2 * (1.0 - colorMixValue1) * mixFactor3);
+            colorVariation = mix(colorVariation, pastelYellow, (1.0 - colorMixValue2) * colorMixValue1 * mixFactor4);
+            
+            // Layer 2: New pastel colors with seed-influenced mix factors
+            float mixFactor5 = 1.8 + sin(seed * 1.1) * 0.4;
+            float mixFactor6 = 1.8 + cos(seed * 1.3) * 0.4;
+            float mixFactor7 = 1.7 + sin(seed * 1.5) * 0.4;
+            float mixFactor8 = 1.6 + cos(seed * 1.7) * 0.4;
+            float mixFactor9 = 1.5 + sin(seed * 1.9) * 0.4;
+            
+            colorVariation = mix(colorVariation, brightPink, (colorMixValue1 * colorMixValue2) * mixFactor5);
+            colorVariation = mix(colorVariation, pastelLavender, (1.0 - colorMixValue3) * colorMixValue1 * mixFactor6);
+            colorVariation = mix(colorVariation, pastelPeach, colorMixValue3 * (1.0 - colorMixValue2) * mixFactor7);
+            colorVariation = mix(colorVariation, pastelTeal, (colorMixValue2 * colorMixValue3) * mixFactor8);
+            colorVariation = mix(colorVariation, pastelCoral, ((1.0 - colorMixValue1) * colorMixValue3) * mixFactor9);
+            
+            // Layer 3: Additional colors with seed-influenced noise combinations
+            float seedOffset1 = sin(seed * 2.1) * 0.05;
+            float seedOffset2 = cos(seed * 2.3) * 0.05;
+            
+            float mixValue4 = smoothstep(0.0, 0.7, fbm(uv * (0.18 + seedOffset1) + flow1 * 0.4));
+            float mixValue5 = smoothstep(0.0, 0.75, fbm(uv * (0.22 + seedOffset2) + flow2 * 0.35));
+            
+            float mixFactor10 = 1.7 + sin(seed * 2.5) * 0.4;
+            float mixFactor11 = 1.8 + cos(seed * 2.7) * 0.4;
+            float mixFactor12 = 1.5 + sin(seed * 2.9) * 0.4;
+            
+            colorVariation = mix(colorVariation, pastelMint, mixValue4 * (1.0 - mixValue5) * mixFactor10);
+            colorVariation = mix(colorVariation, pastelLilac, (1.0 - mixValue4) * mixValue5 * mixFactor11);
+            colorVariation = mix(colorVariation, pastelSkyBlue, mixValue4 * mixValue5 * mixFactor12);
+            
+            // Adjust pattern brightness with seed influence
+            float brightnessFactor = 1.2 + sin(seed * 0.5) * 0.1;
+            combinedPattern = pow(combinedPattern * 0.2 + 0.8, brightnessFactor);
+            
+            // Create light spots with seed-influenced threshold
+            float lightThreshold = 0.1 + sin(seed * 0.6) * 0.05;
+            float lightSpots = smoothstep(0.0, lightThreshold, combinedPattern);
+            
+            // Enhanced circular light patterns with seed-influenced distortion
+            float distortionAmount = 0.15 + cos(seed * 0.7) * 0.05;
+            float distortion = sin(slowTime * 0.2 + seed) * distortionAmount;
+            
+            vec2 distortedUV = fract(uv * 1.2 + vec2(
+                sin(uv.y * 2.0 + slowTime * 0.15 + seed * 0.8) * 0.1,
+                cos(uv.x * 1.8 + slowTime * 0.1 + seed * 0.9) * 0.1
+            ));
+            
+            // Adjust circular spots with seed influence and GUI bokehSize
+            float circleSize = 1.8 + sin(seed * 1.1) * 0.3;
+            float circleThreshold = 0.1 + cos(seed * 1.3) * 0.05;
+            float circularSpots = smoothstep(0.0, circleThreshold, 1.0 - length((distortedUV - 0.5) * (circleSize + distortion)));
+            
+            // Mix with liquid movement
+            float mixRatio = 0.7 + sin(seed * 1.5) * 0.1;
+            lightSpots = mix(lightSpots, circularSpots * lightSpots, mixRatio);
+            
+            // Apply liquid-like diffusion with seed influence
+            float diffusionScale = 5.0 + cos(seed * 1.7) * 1.0;
+            float diffusedLightSpots = fbm(uv * diffusionScale + vec2(
+                sin(slowTime * 0.1 + uv.x + seed * 1.9) * 0.2,
+                cos(slowTime * 0.08 + uv.y + seed * 2.1) * 0.2
+            )) * lightSpots;
+            
+            // Mix diffusion with seed influence
+            float diffusionMix = 0.7 + sin(seed * 2.3) * 0.1;
+            lightSpots = mix(lightSpots, diffusedLightSpots, diffusionMix);
+            
+            // Final pattern mix with seed influence
+            float patternMix = 0.75 + cos(seed * 2.5) * 0.1;
+            combinedPattern = mix(combinedPattern, lightSpots, patternMix);
+            
+            float finalValue = combinedPattern;
+            
+            // Use the color variation and apply color tint from GUI
+            vec3 color = finalValue * colorVariation * colorTint;
+            
+            // Bloom with GUI-controlled bloomStrength
+            float bloomThreshold = 0.4 + sin(seed * 2.7) * 0.1;
+            float bloom = smoothstep(0.0, bloomThreshold, finalValue) * bloomStrength;
+            color += bloom;
+            
+            // Grain with GUI-controlled grainAmount
+            float grain = rand(vec3(gl_FragCoord.xy, time + seed)) * grainAmount;
+            float grainMix = 0.2 + cos(seed * 3.3) * 0.05;
+            color = mix(color, vec3(grain), grainMix);
+            
+            // Bokeh effect with GUI-controlled bokehSize and bokehIntensity
+            vec2 bokehUV = uv * 2.0 - 1.0;
+            
+            // Create bokeh spots with seed-influenced positioning
+            for (int i = 0; i < 5; i++) {
+                float t = slowTime * 0.15 + float(i) * 1.37 + seed * (0.1 + float(i) * 0.05);
+                vec2 bokehPos = vec2(
+                    sin(t * 0.43 + seed * (0.2 + float(i) * 0.1)) * 0.6 + sin(t * 0.17 + seed * 0.3) * 0.2,
+                    cos(t * 0.27 + seed * (0.4 + float(i) * 0.1)) * 0.6 + cos(t * 0.11 + seed * 0.5) * 0.2
+                );
+                
+                float dist = length(bokehUV - bokehPos);
+                float bokehMask = 1.0 - smoothstep(bokehSize * (1.0 - 0.2), 
+                                            bokehSize * (1.0 + 0.2), 
+                                            dist);
+                
+                bokehMask *= (1.0 - rand(vec3(bokehUV * 10.0, time + seed * float(i))) * 0.1);
+                
+                float bokehThreshold = 0.7 + sin(seed * (4.1 + float(i) * 0.2)) * 0.1;
+                bokehMask *= smoothstep(0.0, bokehThreshold, finalValue);
+                
+                color += bokehMask * bokehIntensity;
+            }
+            
+            // Final color adjustments with seed influence
+            color = pow(color, vec3(1.0 + sin(seed * 4.3) * 0.1));
+            color = color * (0.6 + cos(seed * 4.5) * 0.05);
+            
+            // Ensure minimum brightness with seed influence
+            vec3 minColor = vec3(0.7 + sin(seed * 4.7) * 0.05);
+            color = max(color, minColor);
+            
+            // Color temperature with seed influence
+            float tempFactor = 1.05 + cos(seed * 4.9) * 0.02;
+            color = mix(color, color * vec3(tempFactor, tempFactor, tempFactor), 0.3);
+            
+            // Saturation with GUI control
+            float luminance = dot(color, vec3(0.299, 0.587, 0.114));
+            vec3 saturatedColor = mix(vec3(luminance), color, saturation);
+            float satMix = 0.6 + cos(seed * 5.3) * 0.1;
+            color = mix(color, saturatedColor, satMix);
+            
+            gl_FragColor = vec4(color, 1.0);
+        }
+    </script>
+
+    <script>
+        // Initialize WebGL context
+        const canvas = document.getElementById('komorebi');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        
+        if (!gl) {
+            alert('WebGL not supported');
+        }
+        
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // Compile shaders
+        function compileShader(source, type) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compilation error:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            
+            return shader;
+        }
+        
+        // Create program
+        const vertexShader = compileShader(document.getElementById('vertexShader').textContent, gl.VERTEX_SHADER);
+        const fragmentShader = compileShader(document.getElementById('fragmentShader').textContent, gl.FRAGMENT_SHADER);
+        
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            console.error('Program linking error:', gl.getProgramInfoLog(program));
+        }
+        
+        gl.useProgram(program);
+        
+        // Create rectangle covering the entire canvas
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            -1.0, -1.0,
+             1.0, -1.0,
+            -1.0,  1.0,
+             1.0,  1.0
+        ]), gl.STATIC_DRAW);
+        
+        // Set up attributes and uniforms
+        const positionLocation = gl.getAttribLocation(program, 'position');
+        gl.enableVertexAttribArray(positionLocation);
+        gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+        
+        const timeLocation = gl.getUniformLocation(program, 'time');
+        const resolutionLocation = gl.getUniformLocation(program, 'resolution');
+        const seedLocation = gl.getUniformLocation(program, 'seed');
+        
+        // GUI-controlled uniform locations
+        const timeScaleLocation = gl.getUniformLocation(program, 'timeScale');
+        const noiseScaleLocation = gl.getUniformLocation(program, 'noiseScale');
+        const bloomStrengthLocation = gl.getUniformLocation(program, 'bloomStrength');
+        const saturationLocation = gl.getUniformLocation(program, 'saturation');
+        const grainAmountLocation = gl.getUniformLocation(program, 'grainAmount');
+        const bokehSizeLocation = gl.getUniformLocation(program, 'bokehSize');
+        const bokehIntensityLocation = gl.getUniformLocation(program, 'bokehIntensity');
+        const colorTintLocation = gl.getUniformLocation(program, 'colorTint');
+        
+        // Set initial random seed
+        let randomSeed = Math.random() * 100;
+        gl.uniform1f(seedLocation, randomSeed);
+        
+        // Initialize parameters object for dat.gui
+        const params = {
+            timeScale: 1.0,
+            noiseScale: 1.0,
+            bloomStrength: 0.7,
+            saturation: 1.0,
+            grainAmount: 0.45,
+            bokehSize: 2.0,
+            bokehIntensity: 0.01,
+            colorTintR: 1.0,
+            colorTintG: 1.0, 
+            colorTintB: 1.0,
+            newPattern: function() {
+                refreshPattern();
+            }
+        };
+        
+        // Function to refresh the pattern with a new random seed
+        function refreshPattern() {
+            randomSeed = Math.random() * 100;
+            gl.uniform1f(seedLocation, randomSeed);
+        }
+        
+        // Add event listener to refresh button
+        document.getElementById('refreshButton').addEventListener('click', refreshPattern);
+        
+        // Also refresh on page load
+        window.addEventListener('load', refreshPattern);
+        
+        // Initialize dat.gui
+        const gui = new dat.GUI({ width: 300 });
+        
+        // Add GUI controls with folders for organization
+        const timeFolder = gui.addFolder('Animation');
+        timeFolder.add(params, 'timeScale', 0.1, 3.0).name('Speed').onChange(updateUniforms);
+        timeFolder.open();
+        
+        const patternFolder = gui.addFolder('Pattern');
+        patternFolder.add(params, 'noiseScale', 0.1, 3.0).name('Noise Scale').onChange(updateUniforms);
+        patternFolder.open();
+        
+        const visualFolder = gui.addFolder('Visual Effects');
+        visualFolder.add(params, 'bloomStrength', 0.0, 2.0).name('Bloom').onChange(updateUniforms);
+        visualFolder.add(params, 'saturation', 0.0, 2.0).name('Saturation').onChange(updateUniforms);
+        visualFolder.add(params, 'grainAmount', 0.0, 1.0).name('Grain').onChange(updateUniforms);
+        visualFolder.open();
+        
+        const bokehFolder = gui.addFolder('Bokeh');
+        bokehFolder.add(params, 'bokehSize', 0.5, 5.0).name('Size').onChange(updateUniforms);
+        bokehFolder.add(params, 'bokehIntensity', 0.0, 0.05).name('Intensity').onChange(updateUniforms);
+        bokehFolder.open();
+        
+        const colorFolder = gui.addFolder('Color Tint');
+        colorFolder.add(params, 'colorTintR', 0.5, 1.5).name('Red').onChange(updateUniforms);
+        colorFolder.add(params, 'colorTintG', 0.5, 1.5).name('Green').onChange(updateUniforms);
+        colorFolder.add(params, 'colorTintB', 0.5, 1.5).name('Blue').onChange(updateUniforms);
+        colorFolder.open();
+        
+        gui.add(params, 'newPattern').name('New Pattern');
+        
+        // Function to update shader uniforms from GUI values
+        function updateUniforms() {
+            gl.uniform1f(timeScaleLocation, params.timeScale);
+            gl.uniform1f(noiseScaleLocation, params.noiseScale);
+            gl.uniform1f(bloomStrengthLocation, params.bloomStrength);
+            gl.uniform1f(saturationLocation, params.saturation);
+            gl.uniform1f(grainAmountLocation, params.grainAmount);
+            gl.uniform1f(bokehSizeLocation, params.bokehSize);
+            gl.uniform1f(bokehIntensityLocation, params.bokehIntensity);
+            gl.uniform3f(colorTintLocation, params.colorTintR, params.colorTintG, params.colorTintB);
+        }
+        
+        // Set initial uniform values
+        updateUniforms();
+        
+        // Animation loop
+        function render(time) {
+            time *= 0.01; // Convert to seconds
+            
+            gl.uniform1f(timeLocation, time);
+            gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+            
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            
+            requestAnimationFrame(render);
+        }
+        
+        // Start the animation loop
+        requestAnimationFrame(render);
+    </script>
+    
+    <!-- Add a small help text for users -->
+    <div style="position: fixed; bottom: 20px; left: 20px; color: rgba(255,255,255,0.6); font-size: 14px; pointer-events: none;">
+        <p>Komorebi - Sunlight Through Trees</p>
+        <p>Use the controls to adjust the animation</p>
+    </div>
+</body>
+</html>
