@@ -131,10 +131,10 @@ Ability to add this shader effect on top of an image?
         // Create larger, more prominent color patches with seed-based randomness
         float fbm(vec2 p) {
             float sum = 0.0;
-            float amp = 4.0;
-            float freq = 0.3;
+            float amp = 3.0;
+            float freq = 0.6;
             // Add seed-based offset for variation between refreshes
-            vec2 seedOffset = vec2(sin(seed), cos(seed * 1.5)) * 10.0;
+            vec2 seedOffset = vec2(sin(seed), cos(seed * 1.5)) * 3.0;
             
             for(int i = 0; i < 3; i++) {
                 // Add unique seed-influenced offset for each octave
@@ -172,7 +172,7 @@ Ability to add this shader effect on top of an image?
             );
             
             // Modify noise scales with GUI and seed influence
-            float seedFactor = 0.8 + sin(seed) * 0.4; // Range 0.4-1.2 for variety
+            float seedFactor = 0.8 + sin(seed) * 4.4; // Range 0.4-1.2 for variety
             float noiseScale1 = 1500.0 * seedFactor * noiseScale;
             float noiseScale2 = 20.0 * (1.0 + cos(seed * 0.7) * 0.3) * noiseScale;
             float noiseScale3 = 10.0 * (1.0 + sin(seed * 1.3) * 0.3) * noiseScale;
@@ -190,26 +190,20 @@ Ability to add this shader effect on top of an image?
             // Main light layer with enhanced 3D liquid motion
             float lightPattern = fbm(uv * noiseScale1 + depthFlow1);
             
-            // Secondary layers with enhanced 3D liquid motion
-            float leafPattern1 = fbm(uv * noiseScale2 + depthFlow2);
-            float leafPattern2 = fbm(uv * noiseScale3 + depthFlow3);
-            
             // Adjust weights using seed for more variation
-            float combinedPattern = lightPattern * (0.5 + sin(seed) * 0.15) + 
-                                  leafPattern1 * (0.3 + cos(seed * 0.7) * 0.1) + 
-                                  leafPattern2 * (0.2 + sin(seed * 1.3) * 0.1);
-            
+            float combinedPattern = lightPattern * (1.0 + sin(seed) * 0.15);
+
             // Start with a seed-influenced base color
             vec3 baseColor = vec3(
-                0.3 + sin(seed * 0.4) * 0.1,
+                0.6 + sin(seed * 0.4) * 0.1,
                 0.9 + cos(seed * 0.3) * 0.05,
                 0.92 + sin(seed * 0.5) * 0.05
             );
             
             // Define pastel colors with slight seed-based variations
-            float colorSeed1 = sin(seed * 0.73) * 0.08;
-            float colorSeed2 = cos(seed * 0.51) * 0.08;
-            float colorSeed3 = sin(seed * 0.92) * 0.08;
+            float colorSeed1 = sin(seed * 0.73) * 0.88;
+            float colorSeed2 = cos(seed * 0.51) * 0.28;
+            float colorSeed3 = sin(seed * 0.92) * 0.48;
             
             vec3 pastelGreen = vec3(0.85 + colorSeed1, 0.95 + colorSeed2, 0.85 + colorSeed3);
             vec3 pastelBlue = vec3(0.85 + colorSeed3, 0.9 + colorSeed1, 0.98 + colorSeed2);
@@ -244,9 +238,9 @@ Ability to add this shader effect on top of an image?
             float colorNoise3 = fbm(uv * noiseSeedFactor3 + liquidFlow3 * 0.25);
             
             // Adjust thresholds with seed influence for variety
-            float threshSeed1 = 0.7 + sin(seed * 0.4) * 0.15;
-            float threshSeed2 = 0.65 + cos(seed * 0.6) * 0.15;
-            float threshSeed3 = 0.75 + sin(seed * 0.8) * 0.15;
+            float threshSeed1 = 0.0 + sin(seed * 0.4) * 0.15;
+            float threshSeed2 = 0.15 + cos(seed * 0.6) * 0.15;
+            float threshSeed3 = 0.25 + sin(seed * 0.8) * 0.15;
             
             float colorMixValue1 = smoothstep(0.0, threshSeed1, colorNoise1);
             float colorMixValue2 = smoothstep(0.0, threshSeed2, colorNoise2);
@@ -295,36 +289,36 @@ Ability to add this shader effect on top of an image?
             colorVariation = mix(colorVariation, pastelSkyBlue, mixValue4 * mixValue5 * mixFactor12);
             
             // Adjust pattern brightness with seed influence
-            float brightnessFactor = 1.2 + sin(seed * 0.5) * 0.1;
+            float brightnessFactor = 3.0 + sin(seed * 0.5) * 0.1;
             combinedPattern = pow(combinedPattern * 0.2 + 0.8, brightnessFactor);
             
             // Create light spots with seed-influenced threshold
-            float lightThreshold = 0.1 + sin(seed * 0.6) * 0.05;
+            float lightThreshold = 0.3 + sin(seed * 0.6) * 0.1;
             float lightSpots = smoothstep(0.0, lightThreshold, combinedPattern);
             
             // Enhanced circular light patterns with seed-influenced distortion
-            float distortionAmount = 0.15 + cos(seed * 0.7) * 0.05;
+            float distortionAmount = 0.05 + cos(seed * 0.7) * 0.05;
             float distortion = sin(slowTime * 0.2 + seed) * distortionAmount;
             
             vec2 distortedUV = fract(uv * 1.2 + vec2(
-                sin(uv.y * 2.0 + slowTime * 0.15 + seed * 0.8) * 0.1,
-                cos(uv.x * 1.8 + slowTime * 0.1 + seed * 0.9) * 0.1
+                sin(uv.y * 2.0 + slowTime * 0.15 + seed * 0.8) * 0.5,
+                cos(uv.x * 1.8 + slowTime * 0.1 + seed * 0.9) * 4.1
             ));
             
             // Adjust circular spots with seed influence and GUI bokehSize
-            float circleSize = 1.8 + sin(seed * 1.1) * 0.3;
-            float circleThreshold = 0.1 + cos(seed * 1.3) * 0.05;
+            float circleSize = 1.0 + sin(seed * 1.1) * 2.3;
+            float circleThreshold = 0.2 + cos(seed * 1.3) * 2.05;
             float circularSpots = smoothstep(0.0, circleThreshold, 1.0 - length((distortedUV - 0.5) * (circleSize + distortion)));
             
             // Mix with liquid movement
-            float mixRatio = 0.7 + sin(seed * 1.5) * 0.1;
+            float mixRatio = 0.0 + sin(seed * 1.5) * 2.5;
             lightSpots = mix(lightSpots, circularSpots * lightSpots, mixRatio);
             
             // Apply liquid-like diffusion with seed influence
-            float diffusionScale = 5.0 + cos(seed * 1.7) * 1.0;
+            float diffusionScale = 0.0 + cos(seed * 1.7) * 5.0;
             float diffusedLightSpots = fbm(uv * diffusionScale + vec2(
-                sin(slowTime * 0.1 + uv.x + seed * 1.9) * 0.2,
-                cos(slowTime * 0.08 + uv.y + seed * 2.1) * 0.2
+                sin(slowTime * 0.05 + uv.x + seed * 1.9) * 0.2,
+                cos(slowTime * 0.04 + uv.y + seed * 2.1) * 0.2
             )) * lightSpots;
             
             // Mix diffusion with seed influence
@@ -332,7 +326,7 @@ Ability to add this shader effect on top of an image?
             lightSpots = mix(lightSpots, diffusedLightSpots, diffusionMix);
             
             // Final pattern mix with seed influence
-            float patternMix = 0.75 + cos(seed * 2.5) * 0.1;
+            float patternMix = 0.45 + cos(seed * 2.5) * 0.4;
             combinedPattern = mix(combinedPattern, lightSpots, patternMix);
             
             float finalValue = combinedPattern;
@@ -341,7 +335,7 @@ Ability to add this shader effect on top of an image?
             vec3 color = finalValue * colorVariation * colorTint;
             
             // Bloom with GUI-controlled bloomStrength
-            float bloomThreshold = 0.4 + sin(seed * 2.7) * 0.1;
+            float bloomThreshold = 1.0 + sin(seed * 2.7) * 0.1;
             float bloom = smoothstep(0.0, bloomThreshold, finalValue) * bloomStrength;
             color += bloom;
             
@@ -379,7 +373,7 @@ Ability to add this shader effect on top of an image?
             color = color * (0.6 + cos(seed * 4.5) * 0.05);
             
             // Ensure minimum brightness with seed influence
-            vec3 minColor = vec3(0.7 + sin(seed * 4.7) * 0.05);
+            vec3 minColor = vec3(0.1 + sin(seed * 4.7) * 0.05);
             color = max(color, minColor);
             
             // Color temperature with seed influence
@@ -480,10 +474,10 @@ Ability to add this shader effect on top of an image?
         
         // Initialize parameters object for dat.gui
         const params = {
-            timeScale: 1.0,
+            timeScale: 0.4,
             noiseScale: 1.0,
             bloomStrength: 0.7,
-            saturation: 1.0,
+            saturation: 0.5,
             grainAmount: 0.45,
             bokehSize: 2.0,
             bokehIntensity: 0.01,
@@ -527,13 +521,13 @@ Ability to add this shader effect on top of an image?
         
         const bokehFolder = gui.addFolder('Bokeh');
         bokehFolder.add(params, 'bokehSize', 0.5, 5.0).name('Size').onChange(updateUniforms);
-        bokehFolder.add(params, 'bokehIntensity', 0.0, 0.05).name('Intensity').onChange(updateUniforms);
+        bokehFolder.add(params, 'bokehIntensity', 0.0, 0.25).name('Intensity').onChange(updateUniforms);
         bokehFolder.open();
         
         const colorFolder = gui.addFolder('Color Tint');
-        colorFolder.add(params, 'colorTintR', 0.5, 1.5).name('Red').onChange(updateUniforms);
-        colorFolder.add(params, 'colorTintG', 0.5, 1.5).name('Green').onChange(updateUniforms);
-        colorFolder.add(params, 'colorTintB', 0.5, 1.5).name('Blue').onChange(updateUniforms);
+        colorFolder.add(params, 'colorTintR', 0.0, 1.5).name('Red').onChange(updateUniforms);
+        colorFolder.add(params, 'colorTintG', 0.0, 1.5).name('Green').onChange(updateUniforms);
+        colorFolder.add(params, 'colorTintB', 0.0, 1.5).name('Blue').onChange(updateUniforms);
         colorFolder.open();
         
         gui.add(params, 'newPattern').name('New Pattern');
