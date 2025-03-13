@@ -3,18 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Komorebi - Sunlight Through Trees</title>
+    <title>Acid Trip</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
 </head>
 <body>
     <canvas id="canvas"></canvas>
     <button id="refreshButton">New Pattern</button>
-
-    <div id="textOverlay">
-        <p>Komorebi - Sunlight Through Trees</p>
-        <p id="seedIndicator">Seed:</p>
-    </div>
 
     <div id="videoRecordingMessageDiv" class="hidden sticky-top">
         Video recording underway. Press menu button or "v" to stop. The video will save to your downloads folder after.
@@ -46,7 +41,6 @@
         uniform float circleStrength;
         uniform float distortX;
         uniform float distortY;
-        uniform float verticalFlowFactor;
         
         // Noise functions for 3D simplex noise
         vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -240,9 +234,7 @@
             vec3 pastelBlue = vec3(0.85 + colorSeed3, 0.9 + colorSeed1, 0.98 + colorSeed2);
             vec3 pastelPink = vec3(0.98 + colorSeed2, 0.88 + colorSeed3, 0.92 + colorSeed1);
             vec3 pastelYellow = vec3(0.98 + colorSeed3, 0.95 + colorSeed1, 0.85 + colorSeed2);
-            vec3 brightPink = vec3(0.98 + colorSeed1, 0.85 + colorSeed2, 0.92 + colorSeed3);
-            
-            // Additional pastel colors with seed variations
+            vec3 brightPink = vec3(0.98 + colorSeed1, 0.85 + colorSeed2, 0.92 + colorSeed3);            
             vec3 pastelLavender = vec3(0.92 + colorSeed2, 0.88 + colorSeed3, 0.98 + colorSeed1);
             vec3 pastelPeach = vec3(0.98 + colorSeed3, 0.92 + colorSeed1, 0.87 + colorSeed2);
             vec3 pastelTeal = vec3(0.85 + colorSeed1, 0.95 + colorSeed2, 0.95 + colorSeed3);
@@ -252,12 +244,12 @@
             vec3 pastelSkyBlue = vec3(0.85 + colorSeed2, 0.91 + colorSeed1, 0.98 + colorSeed3);
             
             // Using larger color patches with 3D liquid-like noise and seed influence
-            float verticalFlow = sin(uv.y * 3.0 + slowTime * 0.2 + seed * 0.4) * verticalFlowFactor;
+            float verticalFlow = sin(uv.y * 3.0 + slowTime * 0.2 + seed * 0.4) * 1.0;
             
             // Creating more complex flow patterns for liquid movement
-            vec2 liquidFlow1 = flow1 + vec2(verticalFlow, sin(uv.x * 2.5 + slowTime * 0.15 + seed * 0.3) * 0.2);
-            vec2 liquidFlow2 = flow2 + vec2(cos(uv.y * 2.2 + slowTime * 0.1 + seed * 0.5) * 0.15, verticalFlow);
-            vec2 liquidFlow3 = flow3 + vec2(verticalFlow * 0.5, cos(uv.x * 1.8 - slowTime * 0.12 + seed * 0.7) * 0.25);
+            vec2 liquidFlow1 = flow1 + vec2(verticalFlow, sin(uv.x * 2.5 + slowTime * 0.10 + seed * 0.3) * 0.2);
+            vec2 liquidFlow2 = flow2 + vec2(cos(uv.y * 2.2 + slowTime * 0.05 + seed * 0.5) * 0.15, verticalFlow);
+            vec2 liquidFlow3 = flow3 + vec2(verticalFlow * 0.5, cos(uv.x * 1.8 - slowTime * 0.07 + seed * 0.7) * 0.25);
             
             // Add seed-dependent scale factors for noise
             float noiseSeedFactor1 = 0.15 * (1.0 + sin(seed * 0.3) * 0.3);
@@ -265,9 +257,7 @@
             float noiseSeedFactor3 = 0.12 * (1.0 + sin(seed * 0.7) * 0.3);
             
             // Using 3D noise for color patterns with different time components for variety
-            float colorNoise1 = fbm3D(vec3(uv * noiseSeedFactor1 + liquidFlow1 * 0.1, slowTime * 0.04 + seed * 0.27));
-            float colorNoise2 = fbm3D(vec3(uv * noiseSeedFactor2 + liquidFlow2 * 0.1, slowTime * 0.05 + seed * 0.13));
-            float colorNoise3 = fbm3D(vec3(uv * noiseSeedFactor3 + liquidFlow3 * 0.05, slowTime * 0.07 + seed * 0.42));
+            float colorNoise1 = fbm3D(vec3(uv * noiseSeedFactor1 + liquidFlow1 * 0.03, slowTime * 0.02 + seed * 0.27));
             
             // Adjust thresholds with seed influence for variety
             float threshSeed1 = 0.0 + sin(seed * 0.4) * 0.15;
@@ -275,8 +265,8 @@
             float threshSeed3 = 0.25 + sin(seed * 0.8) * 0.15;
             
             float colorMixValue1 = smoothstep(0.0, threshSeed1, colorNoise1);
-            float colorMixValue2 = smoothstep(0.0, threshSeed2, colorNoise2);
-            float colorMixValue3 = smoothstep(0.0, threshSeed3, colorNoise3);
+            float colorMixValue2 = smoothstep(0.0, threshSeed2, colorNoise1);
+            float colorMixValue3 = smoothstep(0.0, threshSeed3, colorNoise1);
             
             // Start with base color and mix in expanded pastel palette
             vec3 colorVariation = baseColor;
@@ -309,10 +299,9 @@
             float seedOffset1 = sin(seed * 2.1) * 0.05;
             float seedOffset2 = cos(seed * 2.3) * 0.05;
             
-            // Using 3D noise with different time components for additional variety
-            float mixValue4 = smoothstep(0.0, 0.7, fbm3D(vec3(uv * (0.18 + seedOffset1) + flow1 * 0.4, slowTime * 0.04 + seed * 0.19)));
-            float mixValue5 = smoothstep(0.0, 0.75, fbm3D(vec3(uv * (0.22 + seedOffset2) + flow2 * 0.35, slowTime * 0.06 + seed * 0.31)));
-            
+            float mixValue4 = smoothstep(0.0, 1.0, float(uv * (0.18 + seedOffset1)));
+            float mixValue5 = mixValue4 - (sin(seed*0.6)*0.4);
+
             float mixFactor10 = 1.7 + sin(seed * 2.5) * 0.4;
             float mixFactor11 = 1.8 + cos(seed * 2.7) * 0.4;
             float mixFactor12 = 1.5 + sin(seed * 2.9) * 0.4;

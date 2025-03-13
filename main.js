@@ -4,7 +4,8 @@ Press z for zen mode (hides all control and other display on top of the canvas)
 Text below screen (canvas should take up entire screen though)
 Ability to add this shader effect on top of an image?
 Presets / seed choice??
-Improve frame rate / script performance
+Site OG stuff
+About / footer info
 button to restart script from time=0
 Info overlay screen upon startup (introducing the hotkeys and controls)
 New pattern button should be randomize input instead
@@ -85,7 +86,6 @@ const distortYLocation = gl.getUniformLocation(program, 'distortY');
 
 const patternAmpLocation = gl.getUniformLocation(program, 'patternAmp');
 const patternFreqLocation = gl.getUniformLocation(program, 'patternFreq');
-const verticalFlowFactorLocation = gl.getUniformLocation(program, 'verticalFlowFactor');
 
 // Set initial random seed
 let randomSeed;
@@ -106,8 +106,6 @@ const params = {
     circleStrength: 1.0,
     distortX: 5.0,
     distortY: 20.0,
-
-    verticalFlowFactor: 0.2,
     newPattern: function() {
         refreshPattern();
     },
@@ -132,8 +130,8 @@ timeFolder.add(params, 'timeScale', 0.1, 3.0).name('Speed').onChange(updateUnifo
 timeFolder.open();
 
 const patternFolder = gui.addFolder('Pattern');
-patternFolder.add(params, 'patternAmp', 0.1, 10.0).step(0.1).name('Pattern Amp').onChange(updateUniforms);
-patternFolder.add(params, 'patternFreq', 0.1, 10.0).step(0.1).name('Pattern Freq').onChange(updateUniforms);
+patternFolder.add(params, 'patternAmp', 1.0, 20.0).step(0.1).name('Pattern Amp').onChange(updateUniforms);
+patternFolder.add(params, 'patternFreq', 0.2, 10.0).step(0.1).name('Pattern Freq').onChange(updateUniforms);
 patternFolder.open();
 
 const visualFolder = gui.addFolder('Visual Effects');
@@ -145,7 +143,6 @@ visualFolder.add(params, 'circleStrength', 0.0, 3.0).name('Circle Strength').onC
 visualFolder.add(params, 'distortX', 0.0, 50.0).name('Distort-X').onChange(updateUniforms);
 visualFolder.add(params, 'distortY', 0.0, 50.0).name('Distort-Y').onChange(updateUniforms);
 
-visualFolder.add(params, 'verticalFlowFactor', 0.0, 5.0).name('Vertical Flow').onChange(updateUniforms);
 visualFolder.open();
 
 const colorFolder = gui.addFolder('Color Tint');
@@ -170,9 +167,6 @@ function updateUniforms() {
     gl.uniform1f(circleStrengthLocation, params.circleStrength);
     gl.uniform1f(distortXLocation, params.distortX);
     gl.uniform1f(distortYLocation, params.distortY);
-
-    gl.uniform1f(verticalFlowFactorLocation, params.verticalFlowFactor);
-
 }
 
 // Set initial uniform values
@@ -185,10 +179,15 @@ function drawScene(){
 // Animation loop
 function render(time) {
     if(isPlaying){
-      time *= 0.005; // Convert to seconds
+      time *= 0.0035; // Convert to seconds
       gl.uniform1f(timeLocation, time);
       gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
-      drawScene();
+      
+      //if video recording is ongoing, drawScene is called already so no need to duplicate
+      if(!recordVideoState){
+        drawScene();
+      }
+      
       animationID = requestAnimationFrame(render);
     }
 }

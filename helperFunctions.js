@@ -14,7 +14,6 @@ function togglePlayPause() {
 function refreshPattern() {
   randomSeed = Math.floor(Math.random() * 1000,0);
   gl.uniform1f(seedLocation, randomSeed);
-  document.querySelector("#seedIndicator").textContent = "Seed: "+randomSeed;
   if(!isPlaying){
     isPlaying = true;
     animationID = requestAnimationFrame(render);
@@ -52,24 +51,22 @@ function randomizeInputs() {
   params.timeScale = 0.1 + Math.random() * 0.9;
   
   // Randomize pattern controls
-  params.patternAmp = 1.0 + Math.random() * 9.0;
-  params.patternFreq = 0.2 + Math.random() * 1.8;
+  params.patternAmp = 1.0 + Math.random() * 15.0;
+  params.patternFreq = 0.2 + Math.random() * 4.8;
   
   // Randomize visual effects
-  params.bloomStrength = 1.0 + Math.random() * 4.0;
-  params.saturation = 0.05 + Math.random() * 0.95;
+  params.bloomStrength = Math.random() * 4.0;
+  params.saturation = Math.random() * 2.0;
   params.grainAmount = Math.random() * 0.5;
-  params.minCircleSize = 1.0 + Math.random() * 9.0;
-  params.circleStrength = 0.2 + Math.random() * 2.8;
+  params.minCircleSize = Math.random() * 5.0;
+  params.circleStrength = Math.random() * 3.0;
   params.distortX = Math.random() * 50.0;
   params.distortY = Math.random() * 50.0;
-
-  params.verticalFlowFactor = Math.random() * 2.0;
   
   // Randomize color tint
-  params.colorTintR = 0.5 + Math.random() * 1.0;
-  params.colorTintG = 0.5 + Math.random() * 1.0;
-  params.colorTintB = 0.5 + Math.random() * 1.0;
+  params.colorTintR = Math.random() * 1.5;
+  params.colorTintG = Math.random() * 1.5;
+  params.colorTintB = Math.random() * 1.5;
   
   // Update the GUI controllers to reflect the new values
   for (let i in gui.__controllers) {
@@ -84,10 +81,7 @@ function randomizeInputs() {
     }
   }
   
-  // Update the uniforms in the shader
   updateUniforms();
-  
-  // Generate a new pattern
   refreshPattern();
 }
 
