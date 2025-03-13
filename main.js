@@ -6,9 +6,11 @@ Ability to add this shader effect on top of an image?
 Presets / seed choice??
 Site OG stuff
 About / footer info
-button to restart script from time=0
 Info overlay screen upon startup (introducing the hotkeys and controls)
 New pattern button should be randomize input instead
+Mention how the art is based on randomness and is therefore unique / one of a kind
+site naming
+Add music?
 */
 
 // Initialize WebGL context
@@ -19,6 +21,15 @@ canvas.height = 1000;
 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 let isPlaying = false;
 let animationID = null;
+let randomSeed;
+let time;
+let timeOffset = 0;
+
+// FPS tracking variables
+let frameCount = 0;
+let lastTime = 0;
+let fps = 0;
+const fpsIndicator = document.getElementById('fpsIndicator');
 
 if (!gl) {
     alert('WebGL not supported');
@@ -87,17 +98,15 @@ const distortYLocation = gl.getUniformLocation(program, 'distortY');
 const patternAmpLocation = gl.getUniformLocation(program, 'patternAmp');
 const patternFreqLocation = gl.getUniformLocation(program, 'patternFreq');
 
-// Set initial random seed
-let randomSeed;
-refreshPattern();
-
 // Initialize parameters object for dat.gui
 const params = {
+    canvasWidth: 1000,
+    canvasHeight: 1000,
     timeScale: 0.4,
-    patternAmp: 6.0,
+    patternAmp: 12.0,
     patternFreq: 0.5,
     bloomStrength: 2.7,
-    saturation: 0.15,
+    saturation: 0.85,
     grainAmount: 0.2,
     colorTintR: 1.0,
     colorTintG: 1.0, 
@@ -106,31 +115,30 @@ const params = {
     circleStrength: 1.0,
     distortX: 5.0,
     distortY: 20.0,
-    newPattern: function() {
-        refreshPattern();
-    },
-    togglePlayPause: function() {
-      togglePlayPause();
-    },
 };
 
 // Add event listener to refresh button
-document.getElementById('refreshButton').addEventListener('click', refreshPattern);
+document.getElementById('refreshButton').addEventListener('click', randomizeInputs);
 
 // Also refresh on page load
 window.addEventListener('load', refreshPattern);
 
 // Initialize dat.gui
-const gui = new dat.GUI({ width: 300 });
+const gui = new dat.GUI({ autoplace: false });
 gui.close();
 
 // Add GUI controls with folders for organization
+const canvasFolder = gui.addFolder('Canvas Size');
+canvasFolder.add(params, 'canvasWidth', 100, 2000).step(10).name('Width').onChange(updateCanvasSize);
+canvasFolder.add(params, 'canvasHeight', 100, 2000).step(10).name('Height').onChange(updateCanvasSize);
+canvasFolder.open();
+
 const timeFolder = gui.addFolder('Animation');
 timeFolder.add(params, 'timeScale', 0.1, 3.0).name('Speed').onChange(updateUniforms);
 timeFolder.open();
 
 const patternFolder = gui.addFolder('Pattern');
-patternFolder.add(params, 'patternAmp', 1.0, 20.0).step(0.1).name('Pattern Amp').onChange(updateUniforms);
+patternFolder.add(params, 'patternAmp', 1.0, 50.0).step(0.1).name('Pattern Amp').onChange(updateUniforms);
 patternFolder.add(params, 'patternFreq', 0.2, 10.0).step(0.1).name('Pattern Freq').onChange(updateUniforms);
 patternFolder.open();
 
@@ -151,9 +159,6 @@ colorFolder.add(params, 'colorTintG', 0.0, 1.5).name('Green').onChange(updateUni
 colorFolder.add(params, 'colorTintB', 0.0, 1.5).name('Blue').onChange(updateUniforms);
 colorFolder.open();
 
-gui.add(params, 'newPattern').name('New Pattern');
-gui.add(params, 'togglePlayPause').name('Toggle Play/Pause');
-
 // Function to update shader uniforms from GUI values
 function updateUniforms() {
     gl.uniform1f(timeScaleLocation, params.timeScale);
@@ -169,30 +174,46 @@ function updateUniforms() {
     gl.uniform1f(distortYLocation, params.distortY);
 }
 
-// Set initial uniform values
-updateUniforms();
-
 function drawScene(){
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }
 
 // Animation loop
-function render(time) {
-    if(isPlaying){
-      time *= 0.0035; // Convert to seconds
-      gl.uniform1f(timeLocation, time);
+function render(timestamp) {
+  if (isPlaying) {
+      // Calculate adjusted time by subtracting the offset
+      const adjustedTime = timestamp - timeOffset;
+      time = timestamp;
+
+      const timeInSeconds = adjustedTime * 0.0035;
+      gl.uniform1f(timeLocation, timeInSeconds);
       gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
       
-      //if video recording is ongoing, drawScene is called already so no need to duplicate
-      if(!recordVideoState){
-        drawScene();
+      // FPS calculation
+      frameCount++;
+      
+      // Update FPS every 500ms
+      if (time - lastTime >= 500) {
+          // Calculate FPS: frameCount / timeDiff in seconds
+          fps = Math.round((frameCount * 1000) / (time - lastTime));
+          fpsIndicator.textContent = `FPS: ${fps}`;
+          
+          // Reset for next update
+          frameCount = 0;
+          lastTime = time;
+      }
+      
+      // If video recording is ongoing, drawScene is called already
+      if (!recordVideoState) {
+          drawScene();
       }
       
       animationID = requestAnimationFrame(render);
-    }
+  }
 }
 
 // Start the animation loop
-let time;
 isPlaying = true;
+refreshPattern();
+updateUniforms();
 animationID = requestAnimationFrame(render);

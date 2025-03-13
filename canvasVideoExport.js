@@ -33,7 +33,7 @@ var videofps = 30;
 let bitrate = 16_000_000;
 
 function saveImage() {
-  console.log("Export png image with transparency");
+  console.log("Export png image");
 
   // Create a temporary canvas with the same dimensions
   const tempCanvas = document.createElement('canvas');

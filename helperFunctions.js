@@ -12,6 +12,7 @@ function togglePlayPause() {
 
 // Function to refresh the pattern with a new random seed
 function refreshPattern() {
+  timeOffset = performance.now();
   randomSeed = Math.floor(Math.random() * 1000,0);
   gl.uniform1f(seedLocation, randomSeed);
   if(!isPlaying){
@@ -27,7 +28,7 @@ window.addEventListener('keydown', (event) => {
       togglePlayPause();
   }
 
-  if (event.code === 'Enter') {
+  if (event.code === 'Tab') {
     event.preventDefault();
     refreshPattern();
   }
@@ -43,10 +44,41 @@ window.addEventListener('keydown', (event) => {
   if (event.code === 'KeyV') {
     toggleVideoRecord();
   }
+
+  if (event.code === 'KeyT') {
+    startFromZeroTime();
+  }
 });
+
+function startFromZeroTime(){
+  console.log("Restarting animation from time = 0");
+  
+  // Cancel current animation if running
+  if (animationID) {
+    cancelAnimationFrame(animationID);
+  }
+  
+  // Set the time offset to the current time
+  // This will be subtracted in the render function
+  timeOffset = performance.now();
+  
+  // Reset frame counter for FPS calculation
+  frameCount = 0;
+  lastTime = performance.now();
+  
+  // Make sure all other uniforms are updated
+  updateUniforms();
+  
+  // Ensure animation is playing
+  isPlaying = true;
+  
+  // Start the animation loop from the beginning
+  animationID = requestAnimationFrame(render);
+}
 
 // Function to randomize all GUI parameters
 function randomizeInputs() {
+  timeOffset = performance.now();
   console.log("randomize inputs");
   params.timeScale = 0.1 + Math.random() * 0.9;
   
@@ -84,6 +116,31 @@ function randomizeInputs() {
   updateUniforms();
   refreshPattern();
 }
+
+// Add this function to handle canvas resizing
+function updateCanvasSize() {
+  // Update canvas dimensions
+  canvas.width = params.canvasWidth;
+  canvas.height = params.canvasHeight;
+  
+  // Update the WebGL viewport to match
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  
+  // Re-render if not already playing
+  if (!isPlaying) {
+      drawScene();
+  }
+  
+  // If recording is active, we need to handle that
+  if (recordVideoState) {
+      stopRecording();
+      startRecording();
+  }
+}
+
+window.addEventListener('resize', function() {
+  gl.viewport(0, 0, canvas.width, canvas.height);
+});
 
 //document.getElementById('randomizeBtn').addEventListener('click', () => randomizeInputs());
 //document.getElementById('exportVideoBtn').addEventListener('click', () => toggleVideoRecord());

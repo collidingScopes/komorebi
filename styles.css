@@ -37,11 +37,11 @@ canvas {
     background-color: rgba(255, 255, 255, 0.7);
 }
 
-#textOverlay {
+#fpsIndicator {
     position: fixed;
-    top: 10px;
+    bottom: 10px;
     left: 10px;
-    color: rgba(255,255,255,0.7);
+    color: rgba(255,255,255,0.3);
     font-size: 14px;
     pointer-events: none;
 }
@@ -261,18 +261,18 @@ input[type="file"] {
 }
 
 #subtitleText{
-  font-size: 24px;
+  font-size: 22px;
   font-family: "Helvetica";
   font-weight: 400;
   font-style: normal;
-  /* font-style: italic; */
+  font-style: italic;
   margin:0 auto;
 }
 
 #aboutText{
-  font-size: 76px;
+  font-size: 60px;
 
-  font-family: "Honk", system-ui;
+  font-family: "Modak", system-ui;
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
