@@ -196,7 +196,7 @@ function render(timestamp) {
       }
       
       // If video recording is ongoing, drawScene is called already
-      if (!recordVideoState && !useMobileRecord) {
+      if (!recordVideoState) {
           drawScene();
       }
       
