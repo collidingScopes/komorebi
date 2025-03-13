@@ -4,9 +4,7 @@ Press z for zen mode (hides all control and other display on top of the canvas)
 Ability to add this shader effect on top of an image?
 Presets / seed choice??
 Site OG stuff
-Info overlay screen upon startup (introducing the hotkeys and controls)
-Mention how the art is based on randomness and is therefore unique / one of a kind
-Add music?
+Github readme
 */
 
 // Initialize WebGL context
