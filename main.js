@@ -196,8 +196,8 @@ function render(timestamp) {
       }
       
       // If video recording is ongoing, drawScene is called already
-      if (!recordVideoState) {
-          drawScene();
+      if (!recordVideoState || useMobileRecord) {
+        drawScene();
       }
       
       animationID = requestAnimationFrame(render);
