@@ -20,6 +20,11 @@ if(ua.includes("Android")){
 }
 console.log("isSafari: "+isSafari+", isFirefox: "+isFirefox+", isIOS: "+isIOS+", isAndroid: "+isAndroid);
 
+let useMobileRecord = false;
+if(isIOS || isAndroid || isFirefox){
+  useMobileRecord = true;
+}
+
 var mediaRecorder;
 var recordedChunks;
 var finishedBlob;
@@ -80,7 +85,7 @@ function toggleVideoRecord(){
 
 function chooseRecordingFunction(){
   //resetAnimation();
-  if(isIOS || isAndroid || isFirefox){
+  if(useMobileRecord){
       startMobileRecording();
   }else {
       recordVideoMuxer();
@@ -88,7 +93,7 @@ function chooseRecordingFunction(){
 }
 
 function chooseEndRecordingFunction(){
-  if(isIOS || isAndroid || isFirefox){
+  if(useMobileRecord){
       mobileRecorder.stop();
   }else {
       finalizeVideo();
