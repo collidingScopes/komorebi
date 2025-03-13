@@ -3,8 +3,6 @@ To do:
 Press z for zen mode (hides all control and other display on top of the canvas)
 Ability to add this shader effect on top of an image?
 Presets / seed choice??
-Site OG stuff
-Github readme
 */
 
 // Initialize WebGL context
