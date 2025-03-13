@@ -2,6 +2,8 @@
 
 Create psychedelic animations in real-time in the browser.
 
+(P)art of your next trip.
+
 Webgl shader animation created using liquid motion, distorted shapes, shadows, and light.
 
 ![Liquid Shape Distortions Example](assets/siteOGImage2.png)
@@ -16,7 +18,6 @@ Use this to create:
 - Animated backgrounds for music videos
 - Concert / rave posters
 - Stylized assets for creative projects
-- Art for your next trip
 
 ## Features
 
