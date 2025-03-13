@@ -46,8 +46,7 @@ window.addEventListener('keydown', (event) => {
 // Function to randomize all GUI parameters
 function randomizeInputs() {
   console.log("randomize inputs");
-  // Randomize timeScale (speed) between 0.2 and 1.5
-  params.timeScale = 0.2 + Math.random() * 1.3;
+  params.timeScale = 0.1 + Math.random() * 0.9;
   
   // Randomize pattern controls
   params.patternAmp = 1.0 + Math.random() * 9.0;
@@ -56,7 +55,7 @@ function randomizeInputs() {
   // Randomize visual effects
   params.bloomStrength = 1.0 + Math.random() * 4.0;
   params.saturation = 0.05 + Math.random() * 0.95;
-  params.grainAmount = Math.random() * 0.8;
+  params.grainAmount = Math.random() * 0.5;
   params.minCircleSize = 1.0 + Math.random() * 9.0;
   params.circleStrength = 0.2 + Math.random() * 2.8;
   params.distortX = Math.random() * 50.0;

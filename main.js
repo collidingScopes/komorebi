@@ -97,7 +97,7 @@ const params = {
     patternFreq: 0.5,
     bloomStrength: 2.7,
     saturation: 0.15,
-    grainAmount: 0.5,
+    grainAmount: 0.2,
     colorTintR: 1.0,
     colorTintG: 1.0, 
     colorTintB: 1.0,
@@ -138,7 +138,7 @@ patternFolder.open();
 const visualFolder = gui.addFolder('Visual Effects');
 visualFolder.add(params, 'bloomStrength', 0.0, 5.0).name('Bloom').onChange(updateUniforms);
 visualFolder.add(params, 'saturation', 0.0, 2.0).name('Saturation').onChange(updateUniforms);
-visualFolder.add(params, 'grainAmount', 0.0, 1.0).name('Grain').onChange(updateUniforms);
+visualFolder.add(params, 'grainAmount', 0.0, 0.5).name('Grain').onChange(updateUniforms);
 visualFolder.add(params, 'minCircleSize', 0.0, 10.0).name('Circle Size').onChange(updateUniforms);
 visualFolder.add(params, 'circleStrength', 0.0, 3.0).name('Circle Strength').onChange(updateUniforms);
 visualFolder.add(params, 'distortX', 0.0, 50.0).name('Distort-X').onChange(updateUniforms);

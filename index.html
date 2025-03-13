@@ -211,36 +211,28 @@ button to restart script from time=0
             
             // Create seed-influenced flow vectors for different pattern on each refresh
             vec2 flow1 = vec2(
-                sin(slowTime * 0.31 + seed * 0.42) * 0.3 + sin(slowTime * 0.17 + seed * 0.23) * 0.2,
-                cos(slowTime * 0.27 + seed * 0.31) * 0.3 + cos(slowTime * 0.13 + seed * 0.17) * 0.2
+                sin(slowTime * 0.25 + seed * 0.42) * 0.3 + sin(slowTime * 0.14 + seed * 0.23) * 0.2,
+                cos(slowTime * 0.22 + seed * 0.31) * 0.3 + cos(slowTime * 0.11 + seed * 0.17) * 0.2
             );
             
             vec2 flow2 = vec2(
-                sin(slowTime * 0.19 + 1.7 + seed * 0.13) * 0.4 + sin(slowTime * 0.23 + seed * 0.29) * 0.1,
-                cos(slowTime * 0.22 + 2.3 + seed * 0.19) * 0.4 + cos(slowTime * 0.11 + seed * 0.33) * 0.1
+                sin(slowTime * 0.16 + 1.7 + seed * 0.13) * 0.4 + sin(slowTime * 0.18 + seed * 0.29) * 0.1,
+                cos(slowTime * 0.19 + 2.3 + seed * 0.19) * 0.4 + cos(slowTime * 0.11 + seed * 0.33) * 0.1
             );
             
             vec2 flow3 = vec2(
-                sin(slowTime * 0.15 + 3.4 + seed * 0.25) * 0.25 + sin(slowTime * 0.29 + seed * 0.11) * 0.15,
-                cos(slowTime * 0.18 + 1.2 + seed * 0.37) * 0.25 + cos(slowTime * 0.33 + seed * 0.27) * 0.15
+                sin(slowTime * 0.13 + 3.4 + seed * 0.25) * 0.25 + sin(slowTime * 0.22 + seed * 0.11) * 0.15,
+                cos(slowTime * 0.18 + 1.2 + seed * 0.37) * 0.25 + cos(slowTime * 0.25 + seed * 0.27) * 0.15
             );
             
-            float noiseScale1 = 30000.0;
-            
-            // Create depth layers with seed randomization
-            float depthOffset1 = sin(slowTime * 0.02 + seed * 0.5) * 6.15;
-            float depthOffset2 = sin(slowTime * 0.03 + seed * 0.7) * 12.15;
-            
-            // Apply depth offsets to create 3D layering effect
-            vec2 depthFlow1 = flow1 + vec2(depthOffset1, depthOffset2) * 2.0;
-            
+            float noiseScale1 = 10000.0;
+                        
             // Main light layer with enhanced 3D liquid motion - using 3D noise
             // The third component determines how the pattern changes over time
-            float timeComponent = slowTime * 0.1 + sin(seed * 0.63) * 0.2;
-            float lightPattern = fbm3D(vec3(uv * noiseScale1 + depthFlow1, timeComponent));
+            float timeComponent = slowTime * 5.5 + sin(seed * 0.63) * 0.2;
+            float lightPattern = fbm3D(vec3(uv * noiseScale1, timeComponent));
         
-            // Adjust weights using seed for more variation
-            float combinedPattern = lightPattern * (0.25 + sin(seed) * 0.0);
+            float combinedPattern = lightPattern * 0.25;
         
             // Start with a seed-influenced base color
             vec3 baseColor = vec3(
@@ -283,9 +275,9 @@ button to restart script from time=0
             float noiseSeedFactor3 = 0.12 * (1.0 + sin(seed * 0.7) * 0.3);
             
             // Using 3D noise for color patterns with different time components for variety
-            float colorNoise1 = fbm3D(vec3(uv * noiseSeedFactor1 + liquidFlow1 * 0.3, slowTime * 0.05 + seed * 0.27));
-            float colorNoise2 = fbm3D(vec3(uv * noiseSeedFactor2 + liquidFlow2 * 0.3, slowTime * 0.07 + seed * 0.13));
-            float colorNoise3 = fbm3D(vec3(uv * noiseSeedFactor3 + liquidFlow3 * 0.25, slowTime * 0.09 + seed * 0.42));
+            float colorNoise1 = fbm3D(vec3(uv * noiseSeedFactor1 + liquidFlow1 * 0.1, slowTime * 0.04 + seed * 0.27));
+            float colorNoise2 = fbm3D(vec3(uv * noiseSeedFactor2 + liquidFlow2 * 0.1, slowTime * 0.05 + seed * 0.13));
+            float colorNoise3 = fbm3D(vec3(uv * noiseSeedFactor3 + liquidFlow3 * 0.05, slowTime * 0.07 + seed * 0.42));
             
             // Adjust thresholds with seed influence for variety
             float threshSeed1 = 0.0 + sin(seed * 0.4) * 0.15;
@@ -344,11 +336,11 @@ button to restart script from time=0
             combinedPattern = pow(combinedPattern * 0.2 + 0.8, brightnessFactor);
             
             // Create light spots with seed-influenced threshold
-            float lightThreshold = 1.0 + sin(seed * 0.6) * 2.1;
+            float lightThreshold = 1.0 + sin(seed * 0.6) * 0.8;
             float lightSpots = smoothstep(0.0, lightThreshold, combinedPattern);
             
             // Enhanced circular light patterns with seed-influenced distortion
-            float distortionAmount = 1.0 + cos(seed * 0.7) * 2.05;
+            float distortionAmount = 1.0 + cos(seed * 0.7) * 5.05;
             float distortion = sin(slowTime * 0.1 + seed) * distortionAmount;
             
             vec2 distortedUV = fract(uv * 1.0 + vec2(
@@ -357,14 +349,14 @@ button to restart script from time=0
             ));
             
             // Adjust circular spots with seed influence
-            float circleSize = minCircleSize + sin(seed * 1.1) * 2.3;
+            float circleSize = minCircleSize + sin(seed) * 1.3;
             float circleThreshold = 0.0 + cos(seed * 1.3) * 2.05;
             float circularSpots = smoothstep(0.0, circleThreshold, 1.0 - length((distortedUV - 0.5) * (circleSize + distortion)));
             
             // Mix with liquid movement
             float mixRatio = 0.0 + sin(seed * 1.5) * circleStrength;
             lightSpots = mix(lightSpots, circularSpots * lightSpots, mixRatio);
-            
+
             // Apply liquid-like diffusion with seed influence and 3D noise
             float diffusionScale = 0.0 + cos(seed * 1.7) * 5.0;
             float diffusedLightSpots = fbm3D(vec3(
@@ -372,15 +364,16 @@ button to restart script from time=0
                     sin(slowTime * 0.03 + uv.x + seed * 1.9) * 0.2,
                     cos(slowTime * 0.02 + uv.y + seed * 2.1) * 0.2
                 ),
-                slowTime * 0.15 + sin(seed * 0.76) * 0.5
+                slowTime * 0.05 + sin(seed * 0.76) * 0.5
             )) * lightSpots;
             
             // Mix diffusion with seed influence
-            float diffusionMix = 0.7 + sin(seed * 2.3) * 0.1;
+            //float diffusionMix = 0.7 + sin(seed * 2.3) * 0.1;
+            float diffusionMix = 1.0;
             lightSpots = mix(lightSpots, diffusedLightSpots, diffusionMix);
-            
-            // Final pattern mix with seed influence
-            float patternMix = 0.45 + cos(seed * 2.5) * 0.4;
+
+            // Final pattern mix
+            float patternMix = 1.0;
             combinedPattern = mix(combinedPattern, lightSpots, patternMix);
             
             float finalValue = combinedPattern;
@@ -394,22 +387,14 @@ button to restart script from time=0
             color += bloom;
             
             // Grain with GUI-controlled grainAmount
-            vec2 noiseCoord = gl_FragCoord.xy / 1.5;
-            float noise = random(noiseCoord + time * 0.0005) * 0.12 - 0.075;        
+            vec2 noiseCoord = uv;
+            float noise = random(noiseCoord + time * 0.0015) * grainAmount;        
             color = color + vec3(noise);
-                            
-            // Color adjustments with seed influence
-            color = pow(color, vec3(1.0 + sin(seed * 4.3) * 0.1));
-            color = color * (0.6 + cos(seed * 4.5) * 0.05);
-        
-            // Color temperature with seed influence
-            float tempFactor = 1.05 + cos(seed * 4.9) * 0.02;
-            color = mix(color, color * vec3(tempFactor, tempFactor, tempFactor), 0.3);
-            
+
             // Saturation with GUI control
             float luminance = dot(color, vec3(0.299, 0.587, 0.114));
             vec3 saturatedColor = mix(vec3(luminance), color, saturation);
-            float satMix = 0.9 + cos(seed * 5.3) * 0.2;
+            float satMix = 1.0;
             color = mix(color, saturatedColor, satMix);
             
             gl_FragColor = vec4(color, 1.0);
