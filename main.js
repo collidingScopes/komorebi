@@ -10,7 +10,7 @@ Github readme
 // Initialize WebGL context
 const canvas = document.getElementById('canvas');
 let startingWidth = 1000;
-let startingHeight = Math.max(1000,Math.min(2000,startingWidth * (window.innerHeight/window.innerWidth)));
+let startingHeight = Math.round(Math.max(1000, Math.min(2000, startingWidth * (window.innerHeight/window.innerWidth))) / 4) * 4;
 canvas.width = startingWidth;
 canvas.height = startingHeight;
 console.log("canvas width/height: "+canvas.width+" / "+canvas.height);

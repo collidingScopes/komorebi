@@ -50,7 +50,7 @@ This project is built using:
 - dat.GUI for the control interface
 - MP4 muxer for video encoding and export
 
-The fragmnet shader uses:
+The fragment shader uses:
 - 3D simplex noise and fractal Brownian motion for organic patterns / liquid movement
 - Seed-based randomization for unique visuals
 - Real-time shader effects (bloom, saturation, grain)

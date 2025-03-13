@@ -87,11 +87,11 @@ function randomizeInputs() {
   params.timeScale = 0.1 + Math.random() * 0.8;
   
   // Randomize pattern controls
-  params.patternAmp = 1.0 + Math.random() * 15.0;
+  params.patternAmp = 3.0 + Math.random() * 17.0;
   params.patternFreq = 0.2 + Math.random() * 4.8;
   
   // Randomize visual effects
-  params.bloomStrength = Math.random() * 4.0;
+  params.bloomStrength = Math.random() * 3.0;
   params.saturation = Math.random() * 2.0;
   params.grainAmount = Math.random() * 0.5;
   params.minCircleSize = Math.random() * 5.0;
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Play background music
     backgroundMusic.loop = true;
-    backgroundMusic.volume = 0.8;        
+    backgroundMusic.volume = 0.7;        
     const playPromise = backgroundMusic.play();
 
     overlay.style.display = 'none';
