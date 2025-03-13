@@ -1,3 +1,15 @@
+/*
+To do:
+Press z for zen mode (hides all control and other display on top of the canvas)
+Text below screen (canvas should take up entire screen though)
+Ability to add this shader effect on top of an image?
+Presets / seed choice??
+Improve frame rate / script performance
+button to restart script from time=0
+Info overlay screen upon startup (introducing the hotkeys and controls)
+New pattern button should be randomize input instead
+*/
+
 // Initialize WebGL context
 const canvas = document.getElementById('canvas');
 canvas.width = 1000;
@@ -5,22 +17,11 @@ canvas.height = 1000;
 
 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 let isPlaying = false;
+let animationID = null;
 
 if (!gl) {
     alert('WebGL not supported');
 }
-
-/*
-// Resize canvas
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    gl.viewport(0, 0, canvas.width, canvas.height);
-}
-
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-*/
 
 // Compile shaders
 function compileShader(source, type) {
@@ -195,4 +196,4 @@ function render(time) {
 // Start the animation loop
 let time;
 isPlaying = true;
-let animationID = requestAnimationFrame(render);
+animationID = requestAnimationFrame(render);

@@ -15,7 +15,10 @@ function refreshPattern() {
   randomSeed = Math.floor(Math.random() * 1000,0);
   gl.uniform1f(seedLocation, randomSeed);
   document.querySelector("#seedIndicator").textContent = "Seed: "+randomSeed;
-  isPlaying = true;
+  if(!isPlaying){
+    isPlaying = true;
+    animationID = requestAnimationFrame(render);
+  }
 }
 
 // Handle keyboard events
