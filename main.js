@@ -9,9 +9,11 @@ Github readme
 
 // Initialize WebGL context
 const canvas = document.getElementById('canvas');
-let startingDimension = 1000;
-canvas.width = startingDimension;
-canvas.height = startingDimension;
+let startingWidth = 1000;
+let startingHeight = Math.max(1000,Math.min(2000,startingWidth * (window.innerHeight/window.innerWidth)));
+canvas.width = startingWidth;
+canvas.height = startingHeight;
+console.log("canvas width/height: "+canvas.width+" / "+canvas.height);
 
 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 let isPlaying = false;
@@ -95,8 +97,8 @@ const patternFreqLocation = gl.getUniformLocation(program, 'patternFreq');
 
 // Initialize parameters object for dat.gui
 const params = {
-    canvasWidth: startingDimension,
-    canvasHeight: startingDimension,
+    canvasWidth: startingWidth,
+    canvasHeight: startingHeight,
     timeScale: 0.4,
     patternAmp: 12.0,
     patternFreq: 0.5,
