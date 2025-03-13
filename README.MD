@@ -22,7 +22,7 @@ Use this to create:
 
 - **Real-time rendering** - real-time edits to the animation in the browser
 - **Randomization** - Generate unique patterns with a single click
-- **Extensive controls** - Fine-tune the animation parameters 
+- **Extensive controls** - Fine-tune the animation parameters and canvas size 
 - **Export options** - Save your creations as images or videos
 - **Completely free** - No paywalls, no premium options
 - **Open source** - MIT licensed for personal and commercial use
