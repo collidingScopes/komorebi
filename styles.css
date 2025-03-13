@@ -103,7 +103,7 @@ canvas {
 
 .gui-button {
   padding: 12px 12px;
-  background-color: transparent;
+  background-color: rgba(18, 72, 181, 0.5);
   border: 2px solid #6f9fff;
   color: #6f9fff;
   cursor: pointer;
@@ -122,7 +122,7 @@ canvas {
 }
 
 .gui-button:hover {
-  background-color: rgba(18, 72, 181, 0.5);
+  background-color: rgba(18, 72, 181, 0.8);
   box-shadow: 0 0 15px rgba(111, 159, 255, 0.4);
 }
 
@@ -332,9 +332,12 @@ h2 {
 }
 
 #buttonTable {
-  display: inline block;
+  /* display: inline block; */
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
   margin: 0 auto;
-  /* width: 100vw; */
+  /* width: 100%; */
   text-align: center;
 }
 
@@ -372,4 +375,110 @@ a, a:visited{
 
 #buyMeACoffeeButton {
   font-size: 10px;
+}
+
+/* Intro overlay screen */
+#intro-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  /* animation: fadeIn 0.3s ease-in-out; */
+}
+
+#intro-content {
+  background-color: rgba(21, 22, 50, 0.9);
+  color: white;
+  max-width: 600px;
+  width: 90%;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(111, 159, 255, 0.3);
+  text-align: center;
+  font-family: Helvetica, Arial, sans-serif;
+  /* animation: slideUp 0.4s ease-out; */
+}
+
+#intro-title {
+  font-size: 40px;
+
+  font-family: "Modak", system-ui;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-variation-settings:
+    "MORF" 15,
+    "SHLN" 50;
+
+  display:block;
+  padding: 0;
+  margin: 0;
+}
+
+.intro-text {
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+
+#hotkeys-section {
+  background-color: rgba(18, 72, 181, 0.3);
+  padding: 15px;
+  border-radius: 5px;
+  margin-bottom: 25px;
+  text-align: left;
+}
+
+#hotkeys-title {
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+#hotkeys-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+#hotkeys-list li {
+  margin-bottom: 5px;
+}
+
+#start-button {
+  background-color: rgba(18, 72, 181, 0.7);
+  color: white;
+  border: 2px solid #6f9fff;
+  padding: 12px 25px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 10px rgba(111, 159, 255, 0.2);
+}
+
+#start-button:hover {
+  background-color: rgba(59, 115, 227, 0.9);
+  box-shadow: 0 0 15px rgba(111, 159, 255, 0.4);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+  }
 }

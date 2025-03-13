@@ -48,6 +48,10 @@ window.addEventListener('keydown', (event) => {
   if (event.code === 'KeyT') {
     startFromZeroTime();
   }
+
+  if (event.code === 'KeyM') {
+    toggleMusic();
+  }
 });
 
 function startFromZeroTime(){
@@ -80,7 +84,7 @@ function startFromZeroTime(){
 function randomizeInputs() {
   timeOffset = performance.now();
   console.log("randomize inputs");
-  params.timeScale = 0.1 + Math.random() * 0.9;
+  params.timeScale = 0.1 + Math.random() * 0.8;
   
   // Randomize pattern controls
   params.patternAmp = 1.0 + Math.random() * 15.0;
@@ -142,6 +146,38 @@ window.addEventListener('resize', function() {
   gl.viewport(0, 0, canvas.width, canvas.height);
 });
 
-//document.getElementById('randomizeBtn').addEventListener('click', () => randomizeInputs());
-//document.getElementById('exportVideoBtn').addEventListener('click', () => toggleVideoRecord());
-//document.getElementById('saveBtn').addEventListener('click', () => saveImage());
+document.getElementById('randomizeBtn').addEventListener('click', () => randomizeInputs());
+document.getElementById('playPauseBtn').addEventListener('click', () => togglePlayPause());
+document.getElementById('exportVideoBtn').addEventListener('click', () => toggleVideoRecord());
+document.getElementById('saveBtn').addEventListener('click', () => saveImage());
+document.getElementById('toggleMusicBtn').addEventListener('click', () => toggleMusic());
+
+//intro overlay info screen
+
+let musicPlaying = true;
+const backgroundMusic = new Audio('assets/fahrenheitFairEnough.mp3');
+
+document.addEventListener('DOMContentLoaded', () => {
+  const overlay = document.getElementById('intro-overlay');
+  const startButton = document.getElementById('start-button');
+  
+  startButton.addEventListener('click', () => {
+
+    // Play background music
+    backgroundMusic.loop = true;
+    backgroundMusic.volume = 0.8;        
+    const playPromise = backgroundMusic.play();
+
+    overlay.style.display = 'none';
+  });
+});
+
+function toggleMusic(){
+  if(musicPlaying){
+    backgroundMusic.pause();
+    musicPlaying = false;
+  } else {
+    const playPromise = backgroundMusic.play();
+    musicPlaying = true;
+  }
+}

@@ -14,7 +14,7 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <meta property="og:title" content="Liquid Shape Distortions" />
-    <meta property="og:description" content="Art of your next trip" />
+    <meta property="og:description" content="psychedelic animation generator; art of your next trip" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://collidingscopes.github.io/liquid-logo" />
     <meta property="og:image" content="https://collidingscopes.github.io/liquid-logo/assets/siteOGImage4.png">
@@ -29,34 +29,83 @@
    
 </head>
 <body>
+    
+    <div id="intro-overlay">
+        <div id="intro-content">
+          <h1 id="intro-title">Liquid Shape Distortions 🌀</h1>
+          <p class="intro-text">
+            Create psychadelic art made from liquid motion, distorted shapes, shadows and light. 
+          </p>
+          <p class="intro-text">I recommend hitting the 🎲 button until you get something you like.</p>
+          <p class="intro-text">You can also open the detailed controls at the top right of the screen to fine-tune the parameters one-by-one.</p>
+
+          <div id="hotkeys-section">
+            <ul id="hotkeys-list">
+              <li>🎲: randomize all inputs [r]</li>
+              <li>⏯️: pause/play the animation [space]</li>
+              <li>📷: save a screenshot image [s]</li>
+              <li>🎥: start/stop video export [v]</li>
+              <li>🔊: start/stop music [m]</li>
+            </ul>
+          </div>
+          <button id="start-button">Go ✨</button>
+        </div>
+    </div>
+
     <div id="gui" class="ui-overlay"></div>
     <canvas id="canvas"></canvas>
+    
+    <table id="buttonTable">
+        <tr>
+            <td>
+              <button id="randomizeBtn" class="gui-button icon" title="Randomize Inputs (r)">🎲</button>
+            </td>
+
+            <td>
+                <button id="playPauseBtn" class="gui-button icon" title="Play/Pause (space)">⏯️</button>
+            </td>
+  
+            <td>
+              <button id="saveBtn" class="gui-button icon" title="Save Image (s)">📷</button>
+            </td>
+  
+            <td>
+              <button id="exportVideoBtn" class="gui-button icon" title="Export Video (v)">🎥</button>
+            </td>
+
+            <td>
+                <button id="toggleMusicBtn" class="gui-button icon" title="Toggle Music (m)">🔊</button>
+            </td>
+        </tr>
+    </table>
+    
     <p id="fpsIndicator" class="ui-overlay">FPS: </p>
-    <button id="refreshButton" class="ui-overlay">New Pattern</button>
 
     <div id="videoRecordingMessageDiv" class="hidden sticky-top">
-        Video recording underway. Press menu button or "v" to stop. The video will save to your downloads folder after.
+        Video recording underway. Press 🎥 button or "v" to stop. The video will save to your downloads folder after.
     </div>
   
       <div id="notesDiv">
         <div id="textBox">
   
             <h2 id="aboutText">Liquid Shape Distortions 🌀</h2>
-            <h3 id="subtitleText">Art of your next trip; psychedelic animation generator</h3>
+            <h3 id="subtitleText">Psychedelic animation generator; art of your next trip</h3>
   
             <img class="example-img" src="assets/siteOGImage4.png">
   
             <p>Create psychadelic art made from liquid motion, distorted shapes, shadows and light. This tool is free, and works in real-time directly in the browser.</p>
             <p>Use this to create art for a music video, for stylized animations in creative projects, or wherever your mind takes you.</p>
-            <p>Click the 🎲 button underneath the canvas to randomize all input parameters, this can give interesting colour / movement styles. You can then open the controls at the top right of the screen to fine-tune the parameters one-by-one.</p>
-            <p>How this works: this tool uses WebGL shaders to create a real-time animation that moves around the edges of your logo, creating a liquid-metal aesthetic.</p>
+            <p>Use the detailed control menu (top-right) to set a custom canvas size, adjust animation speed, control pattern and colours, etc...</p>
             <p>You can export your creation as an image or video afterwards.</p>
-            <p>A few hotkeys for the pros:</p>
+            <p>How this works: this tool uses WebGL shaders to create a real-time animation (with a trippy liquid / shadow / blur aesthetic).</p>
+            <p>The animation is created using a random seed position and mixes in random noise (fractal brownian motion, 3D simplex noise), so each time you re-run it you're creating a unique piece of art.</p>
+            <p>Controls / hotkeys:</p>
             <ul>
-              <li>[r]: randomize all inputs (useful to find interesting parameters for a new image)</li>
-              <li>[space]: pause/play the animation</li>
-              <li>[v]: start and stop video export</li>
-              <li>[s]: save a screenshot image</li>
+                <li>🎲: randomize all inputs [r]</li>
+                <li>⏯️: pause/play the animation [space]</li>
+                <li>📷: save a screenshot image [s]</li>
+                <li>🎥: start and stop video export [v]</li>
+                <li>🔊: start/stop music [m]</li>
             </ul>
             <p>This tool is completely free, open source (MIT license), without any paywalls or premium options. You are welcome to use it for personal or commercial purposes.</p>
             <p>If you found this tool useful, feel free to buy me a coffee. My name is Alan, and I enjoy building open source software for art, animation, games, and more. This would be much appreciated during late-night coding sessions!</p>
@@ -67,13 +116,14 @@
             <p>If the video export feature does not work for you, please try a free screen-recording tool such as OBS Studio.</p>
   
             <p>This project is coded using webgl shaders, vanilla Javascript, HTML5 canvas, and CSS (<a href="https://github.com/collidingScopes/liquid-logo" target="_blank" rel="noopener">see github repo</a>). Video creation and encoding is done using mp4 muxer.</p>
+            <p>The song used is Fahrenheit Fair Enough by Telefon Tel Aviv.</p>
             <p>If you enjoyed this, you may be interested in my other free / open source projects:</p>
             <ul>
               <li><a href="https://collidingScopes.github.io/particular-drift" target="_blank" rel="noopener">Particular Drift</a>: turn photos into flowing particle animations</li>
+              <li><a href="https://collidingScopes.github.io/liquid-logo" target="_blank" rel="noopener">Liquid Logo</a>: turn logos and icons into liquid metal animations</li>
               <li><a href="https://collidingScopes.github.io/ascii" target="_blank" rel="noopener">Video-to-ASCII</a>: turn videos into ASCII pixel art</li>
               <li><a href="https://collidingScopes.github.io/shimmer" target="_blank" rel="noopener">Shape Shimmer</a>: turn photos into funky wave animations</li>
               <li><a href="https://collidingScopes.github.io" target="_blank" rel="noopener">Colliding Scopes</a>: turn photos into kaleidoscope animations</li>
-              <li><a href="https://collidingScopes.github.io/forcefield" target="_blank" rel="noopener">Force-Field Animation</a>: turn photos into particle animations</li>
               <li><a href="https://manual-brick-breaker.netlify.app" target="_blank" rel="noopener">Manual Brick Breaker</a>: play brick breaker by waving your hands around</li>
             </ul>
             <p>Feel free to reach out to discuss, ask questions, or just to say hi! You can find me <a href="https://www.instagram.com/stereo.drift/" target="_blank" rel="noopener">@stereo.drift</a> on instagram, or through the other places below :)</p>

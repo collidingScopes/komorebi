@@ -1,22 +1,19 @@
 /*
 To do:
 Press z for zen mode (hides all control and other display on top of the canvas)
-Text below screen (canvas should take up entire screen though)
 Ability to add this shader effect on top of an image?
 Presets / seed choice??
 Site OG stuff
-About / footer info
 Info overlay screen upon startup (introducing the hotkeys and controls)
-New pattern button should be randomize input instead
 Mention how the art is based on randomness and is therefore unique / one of a kind
-site naming
 Add music?
 */
 
 // Initialize WebGL context
 const canvas = document.getElementById('canvas');
-canvas.width = 1000;
-canvas.height = 1000;
+let startingDimension = 1000;
+canvas.width = startingDimension;
+canvas.height = startingDimension;
 
 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 let isPlaying = false;
@@ -100,12 +97,12 @@ const patternFreqLocation = gl.getUniformLocation(program, 'patternFreq');
 
 // Initialize parameters object for dat.gui
 const params = {
-    canvasWidth: 1000,
-    canvasHeight: 1000,
+    canvasWidth: startingDimension,
+    canvasHeight: startingDimension,
     timeScale: 0.4,
     patternAmp: 12.0,
     patternFreq: 0.5,
-    bloomStrength: 2.7,
+    bloomStrength: 1.0,
     saturation: 0.85,
     grainAmount: 0.2,
     colorTintR: 1.0,
@@ -116,9 +113,6 @@ const params = {
     distortX: 5.0,
     distortY: 20.0,
 };
-
-// Add event listener to refresh button
-document.getElementById('refreshButton').addEventListener('click', randomizeInputs);
 
 // Also refresh on page load
 window.addEventListener('load', refreshPattern);
