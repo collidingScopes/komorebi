@@ -9,6 +9,7 @@ Webgl shader animation created using liquid motion, distorted shapes, shadows, a
 **Live demo: https://collidingscopes.github.io/liquid-shape-distortions**
 
 ![Liquid Shape Distortions Example](assets/siteOGImage2.png)
+![Liquid Shape Distortions GIF Example](assets/LSD.gif)
 
 ## Overview
 
