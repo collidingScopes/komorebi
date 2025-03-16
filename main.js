@@ -9,7 +9,7 @@ Allow user to upload a song, and then it becomes audio reactive?
 // Initialize WebGL context
 const canvas = document.getElementById('canvas');
 let startingWidth = 1000;
-let startingHeight = Math.round(Math.max(1000, Math.min(2000, startingWidth * (window.innerHeight/window.innerWidth))) / 4) * 4;
+let startingHeight = Math.round(Math.max(1000, Math.min(4000, startingWidth * (window.innerHeight/window.innerWidth))) / 4) * 4;
 canvas.width = startingWidth;
 canvas.height = startingHeight;
 console.log("canvas width/height: "+canvas.width+" / "+canvas.height);
@@ -122,8 +122,8 @@ gui.close();
 
 // Add GUI controls with folders for organization
 const canvasFolder = gui.addFolder('Canvas Size');
-canvasFolder.add(params, 'canvasWidth', 100, 2000).step(10).name('Width').onChange(updateCanvasSize);
-canvasFolder.add(params, 'canvasHeight', 100, 2000).step(10).name('Height').onChange(updateCanvasSize);
+canvasFolder.add(params, 'canvasWidth', 100, 4000).step(10).name('Width').onChange(updateCanvasSize);
+canvasFolder.add(params, 'canvasHeight', 100, 4000).step(10).name('Height').onChange(updateCanvasSize);
 canvasFolder.open();
 
 const timeFolder = gui.addFolder('Animation');
