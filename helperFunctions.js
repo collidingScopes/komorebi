@@ -192,11 +192,13 @@ let isZenMode = false;
 function hideInfo(){
   document.querySelector("#button-table").classList.add("hidden");
   document.querySelector("#info-container").classList.add("hidden");
+  document.querySelector(".close-button").style.opacity = 0;
 }
 
 function showInfo(){
   document.querySelector("#button-table").classList.remove("hidden");
   document.querySelector("#info-container").classList.remove("hidden");
+  document.querySelector(".close-button").style.opacity = 0.6;
 }
 
 function toggleZenMode(){
