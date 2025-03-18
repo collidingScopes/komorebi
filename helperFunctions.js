@@ -52,6 +52,10 @@ window.addEventListener('keydown', (event) => {
   if (event.code === 'KeyM') {
     toggleMusic();
   }
+
+  if (event.code === 'KeyZ') {
+    toggleZenMode();
+  }
 });
 
 function startFromZeroTime(){
@@ -151,6 +155,7 @@ document.getElementById('playPauseBtn').addEventListener('click', () => togglePl
 document.getElementById('exportVideoBtn').addEventListener('click', () => toggleVideoRecord());
 document.getElementById('saveBtn').addEventListener('click', () => saveImage());
 document.getElementById('toggleMusicBtn').addEventListener('click', () => toggleMusic());
+document.getElementById('zen-mode-button').addEventListener('click', () => toggleZenMode());
 
 //intro overlay info screen
 
@@ -180,4 +185,25 @@ function toggleMusic(){
     const playPromise = backgroundMusic.play();
     musicPlaying = true;
   }
+}
+
+let isZenMode = false;
+
+function hideInfo(){
+  document.querySelector("#button-table").classList.add("hidden");
+  document.querySelector("#info-container").classList.add("hidden");
+}
+
+function showInfo(){
+  document.querySelector("#button-table").classList.remove("hidden");
+  document.querySelector("#info-container").classList.remove("hidden");
+}
+
+function toggleZenMode(){
+  if(isZenMode){
+    showInfo();
+  } else {
+    hideInfo();
+  }
+  isZenMode = !isZenMode;
 }

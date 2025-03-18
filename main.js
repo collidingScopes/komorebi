@@ -4,6 +4,7 @@ Press z for zen mode (hides all control and other display on top of the canvas)
 Ability to add this shader effect on top of an image?
 Presets / seed choice??
 Allow user to upload a song, and then it becomes audio reactive?
+Generate perfect loops in x seconds
 */
 
 // Initialize WebGL context
