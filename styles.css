@@ -13,11 +13,11 @@ html, body{
 canvas {
     display: block;
     max-width: 100%;
+    max-height: 100vh;
     margin: 0 auto;
     padding: 0;
-    /* margin-top: 0vh; */
     text-align: center;
-    /* height: 100vh; */
+    object-fit: contain;
 }
 
 #refreshButton {
