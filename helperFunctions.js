@@ -15,6 +15,10 @@ function refreshPattern() {
   timeOffset = performance.now();
   randomSeed = Math.floor(Math.random() * 1000,0);
   gl.uniform1f(seedLocation, randomSeed);
+  
+  // Ensure resolution uniform is updated
+  gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+  
   if(!isPlaying){
     isPlaying = true;
     animationID = requestAnimationFrame(render);
@@ -134,6 +138,9 @@ function updateCanvasSize() {
   // Update the WebGL viewport to match
   gl.viewport(0, 0, canvas.width, canvas.height);
   
+  // Update the resolution uniform in the shader
+  gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+  
   // Re-render if not already playing
   if (!isPlaying) {
       drawScene();
@@ -148,6 +155,7 @@ function updateCanvasSize() {
 
 window.addEventListener('resize', function() {
   gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
 });
 
 document.getElementById('randomizeBtn').addEventListener('click', () => randomizeInputs());

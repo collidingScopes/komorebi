@@ -9,8 +9,11 @@ Generate perfect loops in x seconds
 
 // Initialize WebGL context
 const canvas = document.getElementById('canvas');
-let startingWidth = 1000;
-let startingHeight = Math.round(Math.max(1000, Math.min(4000, startingWidth * (window.innerHeight/window.innerWidth))) / 4) * 4;
+let startingWidth = window.innerWidth;
+let startingHeight = window.innerHeight;
+// Round to multiples of 4 for better video encoding compatibility
+startingWidth = Math.round(startingWidth / 4) * 4;
+startingHeight = Math.round(startingHeight / 4) * 4;
 canvas.width = startingWidth;
 canvas.height = startingHeight;
 console.log("canvas width/height: "+canvas.width+" / "+canvas.height);
@@ -116,6 +119,37 @@ const params = {
 
 // Also refresh on page load
 window.addEventListener('load', refreshPattern);
+
+// Add resize event listener to adjust canvas size when window is resized
+window.addEventListener('resize', function() {
+    // Only auto-resize if the canvas is currently at full viewport size
+    if (canvas.width === Math.round(window.innerWidth / 4) * 4 &&
+        canvas.height === Math.round(window.innerHeight / 4) * 4) {
+        // Update to new viewport size
+        let newWidth = window.innerWidth;
+        let newHeight = window.innerHeight;
+        // Round to multiples of 4 for better video encoding compatibility
+        newWidth = Math.round(newWidth / 4) * 4;
+        newHeight = Math.round(newHeight / 4) * 4;
+        
+        // Update canvas and params
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        params.canvasWidth = newWidth;
+        params.canvasHeight = newHeight;
+        
+        // Update WebGL viewport
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        
+        // Update shader uniforms with new resolution
+        gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+        
+        // Force a redraw
+        drawScene();
+        
+        console.log("Resized canvas to: " + canvas.width + " / " + canvas.height);
+    }
+});
 
 // Initialize dat.gui
 const gui = new dat.GUI({ autoplace: false });
